@@ -1,0 +1,310 @@
+{
+  "hero": {
+    "eyebrow": "MANUFACTURING & CAPABILITY",
+    "eyebrowEn": "MANUFACTURING & CAPABILITY",
+    "title": "직접 만듭니다,\n원료부터 포장까지",
+    "titleEn": "We make it ourselves —\nfrom raw material to pack",
+    "body": "(주)부명은 펫 전문 식품 공장과 중국 칭다오 벤토나이트 모래 공장을 직접 운영하는 제조 기업입니다. 배합 설계, 생산, 품질 검사, 포장까지 전 공정을 자체 역량으로 책임집니다.",
+    "bodyEn": "BOOMYUNG runs its own pet food plant and a bentonite cat-litter plant in Qingdao, China. Formulation, production, quality testing and packing are all handled in-house.",
+    "image": "assets/manufacturing/mfg-hero-poster.jpg",
+    "video": "assets/manufacturing/mfg-hero.mp4"
+  },
+  "feedIntro": {
+    "eyebrow": "PET FOOD PLANT",
+    "eyebrowEn": "PET FOOD PLANT",
+    "title": "펫 전문 식품 제조 공장",
+    "titleEn": "Pet food manufacturing plant",
+    "body": "원료 입고 검사부터 배합, 성형, 건조, 자동 포장까지 한 라인에서 처리합니다. ISO 22000 · HACCP 인증 공정으로 운영되며 전 단계가 추적 가능합니다.",
+    "bodyEn": "Intake inspection, mixing, forming, drying and automated packing run on one line. The process is ISO 22000 and HACCP certified, and every step is traceable.",
+    "image": "assets/manufacturing/feed-plant-poster.jpg",
+    "video": "assets/manufacturing/feed-plant.mp4"
+  },
+  "feedCapabilities": [
+    {
+      "title": "자체 배합 설계",
+      "titleEn": "In-house formulation",
+      "body": "기업부설 연구개발전담부서에서 원료를 검증하고 배합비를 직접 설계합니다.",
+      "bodyEn": "Our certified in-house R&D department validates ingredients and designs every formula."
+    },
+    {
+      "title": "원료 입고 검사",
+      "titleEn": "Raw material inspection",
+      "body": "입고되는 모든 원료를 규격과 기준에 따라 검사한 뒤에만 생산 라인에 투입합니다.",
+      "bodyEn": "Every incoming material is inspected against spec before it reaches the line."
+    },
+    {
+      "title": "자동화 생산 라인",
+      "titleEn": "Automated production line",
+      "body": "배합·성형·건조·냉각·선별이 연속 공정으로 이어지며 작업자 접촉을 최소화합니다.",
+      "bodyEn": "Mixing, forming, drying, cooling and sorting run as one continuous, low-contact process."
+    },
+    {
+      "title": "전 단계 이력 추적",
+      "titleEn": "Full traceability",
+      "body": "생산 일자와 배합 로트가 기록되어 완제품에서 원료까지 역추적이 가능합니다.",
+      "bodyEn": "Production dates and batch lots are logged so any finished pack traces back to its materials."
+    }
+  ],
+  "feedGallery": [
+    {
+      "image": "assets/manufacturing/feed-hall.jpg",
+      "caption": "펫 전문 식품 생산동 전경",
+      "captionEn": "Pet food production hall"
+    },
+    {
+      "image": "assets/manufacturing/feed-intake.jpg",
+      "caption": "원료 입고 및 검사 구역",
+      "captionEn": "Raw material intake and inspection"
+    },
+    {
+      "image": "assets/homad/homad_04.jpg",
+      "caption": "배합·계량 공정",
+      "captionEn": "Mixing and dosing"
+    },
+    {
+      "image": "assets/manufacturing/feed-kibble.jpg",
+      "caption": "성형 직후 키블 이송",
+      "captionEn": "Kibble transfer after forming"
+    },
+    {
+      "image": "assets/manufacturing/feed-line.jpg",
+      "caption": "건조·냉각 라인",
+      "captionEn": "Drying and cooling line"
+    },
+    {
+      "image": "assets/manufacturing/feed-screen.jpg",
+      "caption": "키블 선별 공정",
+      "captionEn": "Kibble sorting"
+    },
+    {
+      "image": "assets/manufacturing/feed-packing.jpg",
+      "caption": "자동 포장 라인",
+      "captionEn": "Automated packing line"
+    },
+    {
+      "image": "assets/homad/homad_02.jpg",
+      "caption": "포장 설비 근접",
+      "captionEn": "Packing equipment"
+    },
+    {
+      "image": "assets/manufacturing/feed-lab.jpg",
+      "caption": "품질 검사 실험실",
+      "captionEn": "Quality control laboratory"
+    },
+    {
+      "image": "assets/homad/homad_03.jpg",
+      "caption": "생산 관리 모니터링",
+      "captionEn": "Production monitoring"
+    }
+  ],
+  "certIntro": {
+    "title": "품질 및 안전 인증 시스템",
+    "titleEn": "Quality & Safety Certification Systems",
+    "body": "식품 안전, 위생, 환경 기준을 준수하며 철저한 품질 관리 시스템을 바탕으로 생산합니다.",
+    "bodyEn": "Produced under a strict quality management system that complies with food safety, hygiene, and environmental standards."
+  },
+  "certifications": [
+    {
+      "code": "ISO 14001",
+      "title": "환경경영시스템 (ISO 14001)",
+      "body": "생산 전 과정에서 환경 영향을 최소화하는 국제 표준 환경경영시스템을 적용합니다.",
+      "image": "assets/certifications/iso14001.jpg",
+      "imageEn": "assets/certifications/iso14001_en.jpg",
+      "titleEn": "Environmental Management System",
+      "bodyEn": "Certified environmental management system minimizing environmental impact across production processes."
+    },
+    {
+      "code": "ISO 22000",
+      "title": "식품안전경영시스템 (ISO 22000)",
+      "body": "원료 입고부터 제조, 포장 전 과정에 걸쳐 국제 표준 식품안전 경영시스템을 적용합니다.",
+      "image": "assets/certifications/iso22000.jpg",
+      "imageEn": "assets/certifications/iso22000_en.jpg",
+      "titleEn": "Food Safety Management System",
+      "bodyEn": "Certified international food safety management from raw materials to final packaging."
+    },
+    {
+      "code": "HACCP",
+      "title": "HACCP 위해요소 중점관리",
+      "body": "제조 공정상 발생할 수 있는 위해요소를 사전 차단하여 안전한 사료와 간식을 생산합니다.",
+      "image": "assets/certifications/haccp.jpg",
+      "imageEn": "assets/certifications/haccp_en.jpg",
+      "titleEn": "Hazard Analysis Critical Control Point",
+      "bodyEn": "Rigorous monitoring and prevention of biological, chemical, and physical hazards."
+    },
+    {
+      "code": "AAFCO",
+      "title": "AAFCO 미국사료관리협회 영양기준",
+      "body": "미국사료관리협회(AAFCO)의 개·고양이 필수 영양 가이드라인을 준수합니다.",
+      "image": "",
+      "titleEn": "AAFCO Nutritional Guidelines Compliant",
+      "bodyEn": "Formulated to meet global AAFCO nutritional standards for dogs and cats."
+    }
+  ],
+  "ipIntro": {
+    "title": "보유 특허",
+    "body": "(주)부명은 반려동물 사료 및 용품 관련 기술에 대해 특허청(KIPO)에 등록된 특허, 디자인등록, 실용신안을 보유하고 있습니다.",
+    "titleEn": "Patents Held",
+    "bodyEn": "BOOMYUNG holds patents, design registrations, and utility model registrations granted by the Korean Intellectual Property Office (KIPO) for pet food and pet product technologies."
+  },
+  "patents": [
+    {
+      "type": "특허",
+      "number": "10-2252390",
+      "title": "반려 동물용 육포 및 그 제조방법",
+      "image": "assets/patents/patent_2252390.jpg",
+      "titleEn": "Pet Jerky and Manufacturing Method Thereof"
+    },
+    {
+      "type": "특허",
+      "number": "10-2042458",
+      "title": "벤토나이트를 함유한 고양이 모래 및 그 제조방법",
+      "image": "assets/patents/patent_2042458.jpg",
+      "titleEn": "Bentonite-Containing Cat Litter and Manufacturing Method Thereof"
+    },
+    {
+      "type": "특허",
+      "number": "10-2042457",
+      "title": "두부 부산물을 함유한 고양이 모래 및 그 제조방법",
+      "image": "assets/patents/patent_2042457.jpg",
+      "titleEn": "Tofu-Byproduct Cat Litter and Manufacturing Method Thereof"
+    },
+    {
+      "type": "특허",
+      "number": "10-2248006",
+      "title": "노즈워크매트",
+      "image": "assets/patents/patent_2248006.jpg",
+      "titleEn": "Nosework Mat"
+    },
+    {
+      "type": "특허",
+      "number": "10-2233264",
+      "title": "반려 동물용 육포 포장방법",
+      "image": "assets/patents/patent_2233264.jpg",
+      "titleEn": "Packaging Method for Pet Jerky"
+    },
+    {
+      "type": "특허",
+      "number": "10-2254626",
+      "title": "치석제거가 가능한 반려동물용 껌",
+      "image": "assets/patents/patent_2254626.jpg",
+      "titleEn": "Tartar-Removing Chew Gum for Pets"
+    },
+    {
+      "type": "특허",
+      "number": "10-2246000",
+      "title": "원료육이 코팅된 반려동물용 간식 및 이의 제조방법",
+      "image": "assets/patents/patent_2246000.jpg",
+      "titleEn": "Meat-Coated Pet Treat and Manufacturing Method Thereof"
+    },
+    {
+      "type": "특허",
+      "number": "10-2956733",
+      "title": "반려동물 안구를 위한 식품 조성물",
+      "image": "assets/patents/patent_2956733.jpg",
+      "titleEn": "Food Composition for Pet Eye Health"
+    },
+    {
+      "type": "디자인등록",
+      "number": "30-0833217",
+      "title": "애견용 패드",
+      "image": "assets/patents/design_0833217.png",
+      "titleEn": "Pet Pad"
+    },
+    {
+      "type": "디자인등록",
+      "number": "30-0847166",
+      "title": "애완동물용 목줄",
+      "image": "assets/patents/design_0847166.png",
+      "titleEn": "Pet Leash"
+    }
+  ],
+  "litterIntro": {
+    "eyebrow": "QINGDAO LITTER PLANT",
+    "eyebrowEn": "QINGDAO LITTER PLANT",
+    "title": "칭다오 벤토나이트 모래 공장",
+    "titleEn": "Qingdao bentonite litter plant",
+    "body": "중국 칭다오 현지 공장에서 벤토나이트 원광을 직접 가공해 고양이 모래를 생산합니다. 원광 확보부터 분쇄·선별·코팅·포장까지 직접 관리해 응집력과 분진 수준을 일정하게 유지합니다.",
+    "bodyEn": "At our plant in Qingdao we process bentonite ore into cat litter ourselves — from ore sourcing through crushing, sorting, coating and packing — keeping clumping strength and dust levels consistent.",
+    "image": "assets/manufacturing/litter-plant-poster.jpg",
+    "video": "assets/manufacturing/litter-plant.mp4"
+  },
+  "litterCapabilities": [
+    {
+      "title": "원광 직접 확보",
+      "titleEn": "Direct ore sourcing",
+      "body": "산지에서 벤토나이트 원광을 직접 확보해 원료 품질과 공급을 안정적으로 관리합니다.",
+      "bodyEn": "Sourcing bentonite ore at origin keeps both quality and supply stable."
+    },
+    {
+      "title": "분쇄·정량 배합",
+      "titleEn": "Crushing & batching",
+      "body": "원광을 규격 입도로 분쇄하고 계량 설비로 배합비를 일정하게 맞춥니다.",
+      "bodyEn": "Ore is milled to spec and batched on load cells so every mix is identical."
+    },
+    {
+      "title": "조립·건조 공정",
+      "titleEn": "Granulating & drying",
+      "body": "수분을 조절해 입자를 조립한 뒤 로터리 건조기로 균일하게 말려 응집력을 확보합니다.",
+      "bodyEn": "Granules are formed under controlled moisture, then dried evenly for reliable clumping."
+    },
+    {
+      "title": "저분진 관리",
+      "titleEn": "Low-dust control",
+      "body": "코팅과 다단 집진 설비로 분진을 관리해 반려동물과 보호자의 호흡 부담을 줄입니다.",
+      "bodyEn": "Coating and multi-stage dust collection keep airborne dust down for pets and owners alike."
+    }
+  ],
+  "litterGallery": [
+    {
+      "image": "assets/manufacturing/lt-1-intake.jpg",
+      "caption": "원료 입고 및 이물질 선별",
+      "captionEn": "Raw material intake and foreign matter removal"
+    },
+    {
+      "image": "assets/manufacturing/lt-2-mill.jpg",
+      "caption": "원료 분쇄 및 정량 배합",
+      "captionEn": "Milling and gravimetric batching"
+    },
+    {
+      "image": "assets/manufacturing/lt-3-mix.jpg",
+      "caption": "혼합 및 수분 조절",
+      "captionEn": "Mixing and moisture control"
+    },
+    {
+      "image": "assets/manufacturing/lt-4-granulate.jpg",
+      "caption": "입자 과립 성형 (압출·조립)",
+      "captionEn": "Granule forming (extrusion / granulation)"
+    },
+    {
+      "image": "assets/manufacturing/lt-5-dry.jpg",
+      "caption": "고온 열풍 건조",
+      "captionEn": "High-temperature hot air drying"
+    },
+    {
+      "image": "assets/manufacturing/lt-6-coat.jpg",
+      "caption": "냉각 및 기능성 코팅",
+      "captionEn": "Cooling and functional coating"
+    },
+    {
+      "image": "assets/manufacturing/lt-7-screen.jpg",
+      "caption": "다단 체거름 및 정밀 집진 (제진)",
+      "captionEn": "Multi-deck screening and fine dust collection"
+    },
+    {
+      "image": "assets/manufacturing/lt-8-pack.jpg",
+      "caption": "자동 계량 및 밀봉 포장",
+      "captionEn": "Automatic weighing and sealed packing"
+    }
+  ],
+  "footer": {
+    "company": "(주)부명 BOOMYUNG",
+    "address": "경기도 구리시 건원대로34번길 19 306",
+    "tel": "031-553-8003",
+    "fax": "031-592-2460",
+    "email": "help@petsb2b.co.kr",
+    "brn": "132-81-49973",
+    "copyright": "© 2026 BOOMYUNG Co., Ltd. All Rights Reserved.",
+    "companyEn": "BOOMYUNG Co., Ltd.",
+    "addressEn": "306, 19 Geonwondae-ro 34beon-gil, Guri-si, Gyeonggi-do, Republic of Korea"
+  }
+}

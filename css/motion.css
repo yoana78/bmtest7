@@ -1,0 +1,367 @@
+/* =====================================================================
+   BOOMYUNG motion layer (siteG)
+   js/motion.js 가 html 에 .motion 을 붙였을 때만 동작하는 연출 스타일.
+   모션을 줄이도록 설정된 기기(prefers-reduced-motion)에서는 붙지 않아서
+   원래 사이트 그대로 보인다.
+   ===================================================================== */
+
+/* ---------- 첫 방문 인트로 / 페이지 전환 커튼 ----------
+   head 의 짧은 스크립트가 html 에 mx-intro / mx-enter 를 먼저 붙여서,
+   스크립트가 늦게 로드돼도 본문이 한 번 번쩍 보였다 가려지지 않게 한다. */
+html.mx-intro body > :not(.mx-loader) { opacity: 0; }
+html.mx-enter::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+  background: #0e1730;
+  transform: translateY(0);
+  transition: transform .9s cubic-bezier(.77, 0, .18, 1);
+  pointer-events: none;
+}
+html.mx-enter.mx-entered::before { transform: translateY(-101%); }
+
+.mx-loader {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  pointer-events: none;
+}
+.mx-loader-panels { position: absolute; inset: 0; display: grid; grid-template-columns: repeat(5, 1fr); }
+.mx-loader-panel { background: #0e1730; }
+.mx-loader-panel:nth-child(even) { background: #101b39; }
+.mx-loader-inner { position: relative; z-index: 2; display: grid; justify-items: center; gap: 22px; }
+.mx-loader-mark { width: 72px; height: 72px; filter: brightness(0) invert(1); opacity: 0; }
+.mx-loader-word {
+  display: flex;
+  overflow: hidden;
+  font-family: var(--serif);
+  font-size: clamp(34px, 6vw, 84px);
+  font-weight: 700;
+  letter-spacing: .12em;
+  line-height: 1;
+}
+.mx-loader-word span { display: inline-block; transform: translateY(110%); }
+.mx-loader-sub { font-size: 12px; letter-spacing: .5em; color: #a9895f; opacity: 0; }
+.mx-loader-bar { width: min(320px, 60vw); height: 1px; background: rgba(255, 255, 255, .14); overflow: hidden; }
+.mx-loader-bar i { display: block; height: 100%; background: linear-gradient(90deg, #0066b3, #a9895f); transform: scaleX(0); transform-origin: left; }
+.mx-loader-count {
+  position: absolute;
+  right: 5vw;
+  bottom: 5vh;
+  z-index: 2;
+  font-family: var(--serif);
+  font-size: clamp(56px, 11vw, 160px);
+  font-weight: 200;
+  line-height: .8;
+  color: rgba(255, 255, 255, .9);
+  font-variant-numeric: tabular-nums;
+}
+
+.mx-curtain {
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+  background: #0e1730;
+  transform: translateY(101%);
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+.mx-curtain::after {
+  content: "BOOMYUNG";
+  font-family: var(--serif);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: .6em;
+  color: #a9895f;
+}
+
+/* ---------- 스크롤 진행 막대 ---------- */
+.mx-progress {
+  position: fixed;
+  left: 0; top: 0;
+  z-index: 60;
+  width: 100%;
+  height: 3px;
+  background: linear-gradient(90deg, #0066b3, #3aa0ff 55%, #a9895f);
+  transform: scaleX(0);
+  transform-origin: left;
+  pointer-events: none;
+}
+
+/* ---------- 헤더: 내려갈 땐 숨고 올라올 땐 나타난다 ---------- */
+html.motion .site-header { transition: transform .5s cubic-bezier(.2, .8, .2, 1), background .3s ease, box-shadow .3s ease; }
+html.motion .site-header.mx-hide { transform: translateY(-105%); }
+
+/* ---------- 커스텀 커서 (마우스가 있는 기기만) ---------- */
+html.mx-cursor-on, html.mx-cursor-on a, html.mx-cursor-on button { cursor: none; }
+html.mx-cursor-on input, html.mx-cursor-on textarea, html.mx-cursor-on select { cursor: auto; }
+.mx-cursor-dot, .mx-cursor-ring {
+  position: fixed;
+  left: 0; top: 0;
+  z-index: 10000;
+  pointer-events: none;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+}
+.mx-cursor-dot { width: 6px; height: 6px; background: #0066b3; }
+.mx-cursor-ring {
+  width: 38px;
+  height: 38px;
+  border: 1px solid rgba(0, 102, 179, .55);
+  display: grid;
+  place-items: center;
+  transition: width .35s cubic-bezier(.2, .8, .2, 1), height .35s cubic-bezier(.2, .8, .2, 1),
+    background .35s ease, border-color .35s ease;
+}
+.mx-cursor-ring span {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .18em;
+  color: #fff;
+  opacity: 0;
+  transition: opacity .25s ease;
+}
+.mx-cursor-ring.is-link { width: 58px; height: 58px; border-color: rgba(0, 102, 179, .9); background: rgba(0, 102, 179, .08); }
+.mx-cursor-ring.is-view { width: 86px; height: 86px; border-color: transparent; background: rgba(14, 23, 48, .82); backdrop-filter: blur(4px); }
+.mx-cursor-ring.is-view span { opacity: 1; }
+.mx-cursor-ring.is-dark { border-color: rgba(255, 255, 255, .7); }
+.mx-cursor-dot.is-dark { background: #fff; }
+.mx-cursor-dot.is-hidden, .mx-cursor-ring.is-hidden { opacity: 0; }
+
+/* ---------- 제목 단어 마스크 리빌 ---------- */
+.mx-w {
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: top;
+  /* 한글 받침·영문 하단이 마스크에 잘리지 않도록 여유를 준다 */
+  padding: .06em 0 .12em;
+  margin: -.06em 0 -.12em;
+}
+.mx-wi { display: inline-block; will-change: transform; }
+
+/* 기존 [data-reveal] 페이드는 GSAP 가 대신 맡는다 */
+html.motion [data-reveal] { opacity: 1; transform: none; transition: none; }
+
+/* ---------- 카드 3D 틸트 + 광택 ---------- */
+.mx-tilt { transform-style: preserve-3d; will-change: transform; }
+.mx-glare {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(circle at var(--gx, 50%) var(--gy, 50%), rgba(255, 255, 255, .55), rgba(255, 255, 255, 0) 55%);
+  mix-blend-mode: soft-light;
+  transition: opacity .35s ease;
+}
+.mx-tilt:hover .mx-glare { opacity: 1; }
+
+/* ---------- 버튼: 채워지는 스윕 ---------- */
+html.motion .hero-cta,
+html.motion .btn-outline,
+html.motion .export-btn { position: relative; overflow: hidden; isolation: isolate; }
+html.motion .btn-outline::before,
+html.motion .export-btn::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: #fff;
+  transform: translateY(101%);
+  transition: transform .5s cubic-bezier(.2, .8, .2, 1);
+}
+html.motion .btn-outline:hover,
+html.motion .export-btn:hover { color: #0e1730; }
+html.motion .btn-outline:hover::before,
+html.motion .export-btn:hover::before { transform: translateY(0); }
+
+/* ---------- 홈 히어로 ---------- */
+.hero video.hero-bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: .92;
+}
+.mx-hero-canvas {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  mix-blend-mode: screen;
+  opacity: .75;
+}
+/* 히어로 하단을 가로지르는 거대한 워드마크 */
+.mx-hero-word {
+  position: absolute;
+  left: 0;
+  bottom: -2vw;
+  z-index: 1;
+  white-space: nowrap;
+  font-family: var(--serif);
+  font-size: 19vw;
+  font-weight: 700;
+  line-height: .8;
+  letter-spacing: -.02em;
+  color: transparent;
+  -webkit-text-stroke: 1px rgba(255, 255, 255, .28);
+  pointer-events: none;
+  user-select: none;
+}
+/* 문구가 하단 워드마크와 겹치지 않도록 위로 올린다 */
+html.motion .hero-content { z-index: 3; padding-bottom: calc(13vw + 40px); }
+.scroll-hint { z-index: 3; }
+.mx-scroll-line {
+  display: block;
+  width: 1px;
+  height: 54px;
+  margin: 10px auto 0;
+  background: rgba(255, 255, 255, .25);
+  overflow: hidden;
+  position: relative;
+}
+.mx-scroll-line::after {
+  content: "";
+  position: absolute;
+  left: 0; top: -50%;
+  width: 100%;
+  height: 50%;
+  background: #fff;
+  animation: mx-scroll-drop 1.8s cubic-bezier(.7, 0, .3, 1) infinite;
+}
+@keyframes mx-scroll-drop { to { top: 100%; } }
+
+/* ---------- 키네틱 타이포 밴드 ---------- */
+.mx-band {
+  position: relative;
+  overflow: hidden;
+  padding: 64px 0;
+  background: var(--navy-deep);
+  color: #fff;
+}
+.mx-band-row {
+  display: flex;
+  width: max-content;
+  white-space: nowrap;
+  will-change: transform;
+}
+.mx-band-row span {
+  font-family: var(--serif);
+  font-size: clamp(44px, 8.5vw, 136px);
+  font-weight: 700;
+  line-height: 1.02;
+  letter-spacing: -.02em;
+  padding-right: .45em;
+}
+.mx-band-row span:nth-child(odd) { color: transparent; -webkit-text-stroke: 1.2px rgba(255, 255, 255, .55); }
+.mx-band-row span i { font-style: normal; color: #a9895f; -webkit-text-stroke: 0; }
+.mx-band-row + .mx-band-row { margin-top: 8px; }
+
+/* ---------- 홈: 제조 쇼케이스 (스크롤로 영상 창이 전체 화면으로 열린다) ---------- */
+.mx-showcase { position: relative; background: var(--navy-deep); color: #fff; }
+.mx-showcase-stage {
+  position: relative;
+  height: 100vh;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+}
+.mx-showcase-media {
+  position: absolute;
+  inset: 0;
+  clip-path: inset(18% 26% 18% 26% round 28px);
+  will-change: clip-path;
+}
+.mx-showcase-media video { width: 100%; height: 100%; object-fit: cover; transform: scale(1.25); }
+.mx-showcase-media::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(14, 23, 48, .25), rgba(14, 23, 48, .72));
+}
+.mx-showcase-copy { position: relative; z-index: 2; text-align: center; padding: 0 24px; max-width: 980px; }
+.mx-showcase-eyebrow { font-size: 12px; letter-spacing: .42em; color: #a9895f; margin: 0 0 22px; }
+.mx-showcase-title {
+  font-family: var(--serif);
+  font-size: clamp(38px, 7vw, 108px);
+  font-weight: 700;
+  line-height: 1.08;
+  letter-spacing: -.035em;
+  margin: 0;
+}
+.mx-showcase-body { font-size: 15px; line-height: 1.85; color: rgba(255, 255, 255, .82); max-width: 560px; margin: 26px auto 34px; }
+.mx-showcase-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 15px 30px;
+  border: 1px solid rgba(255, 255, 255, .55);
+  border-radius: 999px;
+  font-size: 13.5px;
+  letter-spacing: .04em;
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  transition: color .4s ease;
+}
+.mx-showcase-cta::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: #fff;
+  transform: translateY(101%);
+  transition: transform .5s cubic-bezier(.2, .8, .2, 1);
+}
+.mx-showcase-cta:hover { color: #0e1730; }
+.mx-showcase-cta:hover::before { transform: translateY(0); }
+
+/* ---------- 푸터 거대 워드마크 ---------- */
+.mx-footer-word {
+  display: flex;
+  justify-content: space-between;
+  overflow: hidden;
+  margin-top: 56px;
+  font-family: var(--serif);
+  /* .wrap(최대 1180px) 안에 여덟 글자가 잘리지 않고 들어가는 크기 */
+  font-size: clamp(52px, 11.5vw, 168px);
+  font-weight: 700;
+  line-height: .78;
+  letter-spacing: -.03em;
+  color: transparent;
+  -webkit-text-stroke: 1px rgba(22, 35, 74, .2);
+  user-select: none;
+  pointer-events: none;
+}
+.mx-footer-word span { display: inline-block; }
+
+/* ---------- 모바일 ---------- */
+@media (max-width: 760px) {
+  .mx-band { padding: 40px 0; }
+  .mx-showcase-stage { height: auto; min-height: 88vh; padding: 110px 0; }
+  .mx-showcase-media { clip-path: none; }
+  .mx-showcase-media video { transform: none; }
+  .mx-hero-word { font-size: 26vw; bottom: 0; }
+  html.motion .hero-content { padding-bottom: calc(20vw + 48px); }
+  .mx-loader-count { right: 6vw; bottom: 4vh; }
+  .mx-footer-word { margin-top: 36px; }
+}
+
+/* 모션을 줄이도록 설정한 기기에서는 새로 넣은 섹션도 정지 상태로 보여준다 */
+@media (prefers-reduced-motion: reduce) {
+  .mx-showcase-media { clip-path: none; }
+  .mx-showcase-media video { transform: none; }
+  .mx-scroll-line::after { animation: none; }
+}
+
+/* 좁은 화면에서 헤더의 "(주)부명"이 두 줄로 꺾이지 않게 */
+.brand-mark span { white-space: nowrap; }

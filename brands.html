@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/png" href="./favicon.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>브랜드 | (주)부명 BOOMYUNG</title>
+    <meta name="description" content="(주)부명이 직접 만드는 자사 브랜드와 엄선한 해외 수입 브랜드를 한 곳에서 소개합니다." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="./css/main.css" />
+    <link rel="stylesheet" href="./css/pages.css" />
+    <script>
+      // 모션 레이어: 첫 방문 인트로/페이지 전환 커튼이 뜨기 전 본문이 번쩍 보이지 않도록 먼저 표시한다
+      (function () {
+        try {
+          if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+          var h = document.documentElement;
+          if (!sessionStorage.getItem("bm-intro")) h.classList.add("mx-intro");
+          else if (sessionStorage.getItem("bm-transit")) h.classList.add("mx-enter");
+          // 스크립트가 로드되지 않아도 화면이 가려진 채 남지 않게 하는 안전장치
+          setTimeout(function () { h.classList.remove("mx-intro", "mx-enter"); }, 6000);
+        } catch (e) {}
+      })();
+    </script>
+    <link rel="stylesheet" href="./css/motion.css" />
+  </head>
+  <body>
+    <header class="site-header" id="site-header">
+      <a href="index.html" class="brand-mark">
+        <img src="./assets/boomyung_ci_logo.png" alt="BOOMYUNG" />
+        <span>(주)부명</span>
+      </a>
+      <nav class="main-nav">
+        <a href="index.html">홈</a>
+        <a href="about.html">회사소개</a>
+        <a href="manufacturing.html">제조·역량</a>
+        <div class="nav-mega" id="nav-mega">
+          <a href="brands.html" class="nav-mega-trigger">브랜드</a>
+          <div class="nav-mega-panel">
+            <div class="nav-mega-bubble">
+              <div class="nav-mega-title" data-mega-title="own"></div>
+              <div class="nav-mega-grid" id="mega-own"></div>
+              <div class="nav-mega-title" data-mega-title="imported"></div>
+              <div class="nav-mega-grid" id="mega-imported"></div>
+            </div>
+          </div>
+        </div>
+        <a href="catalog.html">제품 카탈로그</a>
+        <a href="network.html">파트너·네트워크</a>
+      </nav>
+      <div class="header-right">
+        <button class="lang-btn" type="button">EN</button>
+        <a href="contact.html" class="lang-btn">문의하기</a>
+      <button class="menu-btn" id="menu-btn" type="button" aria-label="메뉴 열기"><span></span><span></span><span></span></button>
+      </div>
+    </header>
+
+    <div class="mobile-nav" id="mobile-nav">
+      <nav>
+        <a href="index.html">홈</a>
+        <a href="about.html">회사소개</a>
+        <a href="manufacturing.html">제조·역량</a>
+        <a href="brands.html">브랜드</a>
+        <a href="catalog.html">제품 카탈로그</a>
+        <a href="network.html">파트너·네트워크</a>
+        <a href="contact.html">문의하기</a>
+      </nav>
+    </div>
+
+    <main>
+      <section class="page-hero" id="page-hero-root">
+        <img class="hero-bg" src="assets/stock/brands-hero.jpg" alt="" />
+        <div class="wrap">
+          <p class="eyebrow"><span></span></p>
+          <h1></h1>
+          <p class="hero-body"></p>
+        </div>
+      </section>
+
+      <section class="section-pad brands-section">
+        <div class="wrap">
+          <!-- 자사 / 수입 브랜드를 한 페이지에서 보여주고, 탭으로 걸러본다 -->
+          <div class="brand-filter-wrap">
+            <div class="brand-filter-bar" id="brand-filter">
+              <button class="brand-filter-btn active" type="button" data-filter="all">
+                <span class="label"></span><span class="label-short"></span><span class="count"></span>
+              </button>
+              <button class="brand-filter-btn" type="button" data-filter="own">
+                <span class="label"></span><span class="label-short"></span><span class="count"></span>
+              </button>
+              <button class="brand-filter-btn" type="button" data-filter="imported">
+                <span class="label"></span><span class="label-short"></span><span class="count"></span>
+              </button>
+            </div>
+          </div>
+
+          <div class="brand-group" id="own-group">
+            <div class="brand-group-head">
+              <div>
+                <span class="brand-group-tag">DOMESTIC PREMIUM BRANDS</span>
+                <h2 class="brand-group-title"></h2>
+              </div>
+              <p class="brand-group-desc"></p>
+            </div>
+            <div class="brand-own-grid" id="own-grid"></div>
+          </div>
+
+          <div class="brand-group" id="imported-group">
+            <div class="brand-group-head">
+              <div>
+                <span class="brand-group-tag imported">GLOBAL IMPORTED BRANDS</span>
+                <h2 class="brand-group-title"></h2>
+              </div>
+              <p class="brand-group-desc"></p>
+            </div>
+            <div class="brand-imported-grid" id="imported-grid"></div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="wrap">
+        <div class="foot-top">
+          <div class="foot-brand">
+            <img src="./assets/boomyung_ci_logo.png" alt="BOOMYUNG" />
+            <div class="name" id="foot-company"></div>
+            <div id="foot-address"></div>
+            <div id="foot-email"></div>
+          </div>
+          <div class="foot-cols">
+            <div class="foot-col">
+              <h4>기업 안내</h4>
+              <a href="about.html">회사소개</a>
+              <a href="manufacturing.html">제조·역량</a>
+              <a href="brands.html">브랜드</a>
+              <a href="network.html">파트너·네트워크</a>
+            </div>
+            <div class="foot-col">
+              <h4>비즈니스</h4>
+              <a href="catalog.html">제품 카탈로그</a>
+              <a href="contact.html">B2B 입점 문의</a>
+            </div>
+          </div>
+        </div>
+        <div class="foot-bottom">
+          <span id="foot-copy"></span>
+          <div class="foot-legal">
+            <span>개인정보처리방침</span>
+            <span>이용약관</span>
+          </div>
+        </div>
+      </div>
+    </footer>
+
+    <script src="./js/common.js"></script>
+    <script src="./js/vendor/gsap.min.js"></script>
+    <script src="./js/vendor/ScrollTrigger.min.js"></script>
+    <script src="./js/vendor/lenis.min.js"></script>
+    <script src="./js/motion.js"></script>
+    <script src="./js/brands.js"></script>
+  </body>
+</html>

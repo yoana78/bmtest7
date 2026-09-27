@@ -1,0 +1,1334 @@
+// 브랜드/제품 카탈로그는 "브랜드 추가 등록"과 "신규 제품 추가" 탭이 이미 전용
+// 폼(+ 문서 동기화 로직)으로 관리하므로, 같은 데이터를 다시 원시 JSON으로 편집할
+// 수 있게 두면 두 편집 경로가 어긋날 수 있어 탭에서 제외한다.
+const SECTIONS = [
+  { id: "add-brand", label: "브랜드 추가 등록" },
+  { id: "add-product", label: "신규 제품 추가" },
+  { id: "home", label: "홈페이지", endpoint: "/api/content", preview: "index.html" },
+  { id: "about", label: "회사소개", endpoint: "/api/about-content", preview: "about.html" },
+  { id: "manufacturing", label: "제조·역량", endpoint: "/api/manufacturing-content", preview: "manufacturing.html" },
+  { id: "network", label: "파트너·네트워크", endpoint: "/api/network-content", preview: "network.html" },
+  { id: "security", label: "보안" },
+];
+
+let activeSection = "home";
+
+function qs(sel, root = document) {
+  return root.querySelector(sel);
+}
+
+async function checkSession() {
+  // /api/contact's GET is the only endpoint that requires auth, so a
+  // successful call here doubles as a session check.
+  const res = await fetch("/api/contact", { cache: "no-store" });
+  return res.ok;
+}
+
+function showLogin(errorMsg) {
+  qs("#login-view").hidden = false;
+  qs("#dashboard-view").hidden = true;
+  if (errorMsg) {
+    const el2 = qs("#login-error");
+    el2.textContent = errorMsg;
+    el2.hidden = false;
+  }
+}
+
+function showDashboard() {
+  qs("#login-view").hidden = true;
+  qs("#dashboard-view").hidden = false;
+  renderTabs();
+  loadSection(activeSection);
+  loadInquiries();
+}
+
+function renderTabs() {
+  const nav = qs("#admin-tabs");
+  nav.innerHTML = "";
+  SECTIONS.forEach((s) => {
+    const btn = el("button", { class: "admin-tab" + (s.id === activeSection ? " active" : ""), type: "button", text: s.label });
+    btn.addEventListener("click", () => {
+      activeSection = s.id;
+      renderTabs();
+      loadSection(s.id);
+    });
+    nav.appendChild(btn);
+  });
+}
+
+// ---------- Path utilities (dot/bracket paths like "brands[2].logo") ----------
+
+// Arrays of objects at any depth are treated as manageable lists (brands,
+// products, distributors, certifications, ...) so they get add/remove
+// buttons instead of only raw-JSON editing.
+function findArrayFields(obj, path = [], out = []) {
+  if (obj == null || typeof obj !== "object") return out;
+  for (const [key, value] of Object.entries(obj)) {
+    const nextPath = [...path, key];
+    if (Array.isArray(value) && value.length > 0 && typeof value[0] === "object") {
+      out.push(nextPath);
+    } else if (typeof value === "object" && value !== null && !Array.isArray(value)) {
+      findArrayFields(value, nextPath, out);
+    }
+  }
+  return out;
+}
+
+function itemLabel(item, index) {
+  const nameKey = ["nameKo", "name", "title", "code", "year", "number", "eyebrow"].find((k) => item[k]);
+  return nameKey ? `${index + 1}. ${item[nameKey]}` : `항목 ${index + 1}`;
+}
+
+// 업로드 전 이미지 용량을 줄인다 (D1 행 크기 제한 및 느린 업로드 방지).
+// 투명 배경이 필요한 PNG는 PNG로, 그 외는 훨씬 작은 JPEG로 인코딩.
+function compressImage(file, { maxDimension = 1600, startQuality = 0.85, maxBase64Length = 850000 } = {}) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const objectUrl = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(objectUrl);
+      // 상세페이지 인포그래픽처럼 세로로 매우 긴 이미지는 폭 기준으로만 축소한다.
+      // (가로/세로 중 큰 쪽을 기준으로 맞추면 세로가 긴 이미지의 폭이 과도하게 눌려 읽을 수 없게 된다.)
+      let { width, height } = img;
+      if (width > maxDimension) {
+        const scale = maxDimension / width;
+        width = maxDimension;
+        height = Math.round(height * scale);
+      }
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(img, 0, 0, width, height);
+
+      let keepPng = file.type === "image/png";
+      let quality = startQuality;
+      let dataUrl = canvas.toDataURL(keepPng ? "image/png" : "image/jpeg", quality);
+
+      // PNG has no quality setting, so an oversized PNG would hit the shrink loop below and lose
+      // most of its resolution (e.g. 1116x2000 -> 419x750). Flatten it on white and use JPEG at full size.
+      if (keepPng && dataUrl.length > maxBase64Length) {
+        keepPng = false;
+        ctx.fillStyle = "#fff";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        dataUrl = canvas.toDataURL("image/jpeg", quality);
+      }
+
+      // 세로로 아주 긴 상세페이지 인포그래픽은 품질을 많이 낮춰도(0.15까지) 텍스트가 알아볼 수
+      // 있는 수준으로 남지만, 해상도(가로 폭)를 줄이면 글자가 급격히 흐려지므로 품질 하한을
+      // 훨씬 낮게 잡아 해상도를 최대한 오래 유지한다.
+      while (dataUrl.length > maxBase64Length && (quality > 0.15 || canvas.width > 300)) {
+        if (quality > 0.15) quality -= 0.05;
+        if (keepPng || quality <= 0.15) {
+          canvas.width = Math.round(canvas.width * 0.85);
+          canvas.height = Math.round(canvas.height * 0.85);
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          dataUrl = canvas.toDataURL(keepPng ? "image/png" : "image/jpeg", keepPng ? undefined : quality);
+        } else {
+          dataUrl = canvas.toDataURL("image/jpeg", quality);
+        }
+      }
+      resolve({ dataUrl, contentType: keepPng ? "image/png" : "image/jpeg" });
+    };
+    img.onerror = reject;
+    img.src = objectUrl;
+  });
+}
+
+// 페이지에 들어가는 이미지는 자리마다 노출 규격(가로:세로 비율)이 정해져 있다.
+// 다른 비율의 사진을 올리면 레이아웃이 깨지므로, 규격에 맞춰 자동으로 맞춘 뒤 저장한다.
+//   mode 'cover'  : 가운데를 기준으로 잘라내 규격을 꽉 채운다 (사진용)
+//   mode 'contain': 잘리지 않게 전체를 넣고 남는 곳을 여백으로 둔다 (로고용)
+function cropImageToBox(file, targetWidth, targetHeight, { maxBase64Length = 850000, mode = "cover" } = {}) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const objectUrl = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(objectUrl);
+      const targetRatio = targetWidth / targetHeight;
+      const sourceRatio = img.width / img.height;
+
+      let sx = 0, sy = 0, sw = img.width, sh = img.height;
+      if (mode === "cover") {
+        if (sourceRatio > targetRatio) {
+          sw = Math.round(img.height * targetRatio);
+          sx = Math.round((img.width - sw) / 2);
+        } else if (sourceRatio < targetRatio) {
+          sh = Math.round(img.width / targetRatio);
+          sy = Math.round((img.height - sh) / 2);
+        }
+      }
+
+      // 원본이 권장 해상도보다 작으면 억지로 늘리지 않는다 (확대하면 흐려지기만 함)
+      let outW = mode === "cover" ? Math.min(targetWidth, sw) : targetWidth;
+      let outH = Math.round(outW / targetRatio);
+
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+      let keepPng = file.type === "image/png";
+
+      const draw = () => {
+        canvas.width = outW;
+        canvas.height = outH;
+        if (!keepPng) {
+          // JPEG는 투명도가 없어 검게 깔리므로 흰 배경을 먼저 채운다
+          ctx.fillStyle = "#FFFFFF";
+          ctx.fillRect(0, 0, outW, outH);
+        }
+        if (mode === "cover") {
+          ctx.drawImage(img, sx, sy, sw, sh, 0, 0, outW, outH);
+        } else {
+          const scale = Math.min(outW / sw, outH / sh);
+          const dw = Math.round(sw * scale);
+          const dh = Math.round(sh * scale);
+          ctx.drawImage(img, sx, sy, sw, sh, Math.round((outW - dw) / 2), Math.round((outH - dh) / 2), dw, dh);
+        }
+      };
+
+      draw();
+      let quality = 0.88;
+      let dataUrl = canvas.toDataURL(keepPng ? "image/png" : "image/jpeg", quality);
+      // Same PNG issue as compressImage: switch an oversized PNG to JPEG instead of shrinking it.
+      if (keepPng && dataUrl.length > maxBase64Length) {
+        keepPng = false;
+        draw();
+        dataUrl = canvas.toDataURL("image/jpeg", quality);
+      }
+      while (dataUrl.length > maxBase64Length && (quality > 0.35 || outW > 400)) {
+        if (quality > 0.35) {
+          quality -= 0.08;
+        } else {
+          outW = Math.round(outW * 0.85);
+          outH = Math.round(outW / targetRatio);
+          draw();
+        }
+        dataUrl = canvas.toDataURL(keepPng ? "image/png" : "image/jpeg", keepPng ? undefined : quality);
+      }
+      resolve({ dataUrl, contentType: keepPng ? "image/png" : "image/jpeg" });
+    };
+    img.onerror = reject;
+    img.src = objectUrl;
+  });
+}
+
+// 규격에 맞춰 자른 뒤 업로드하고 저장된 주소를 돌려준다
+async function uploadCropped(file, width, height, fit) {
+  const { dataUrl, contentType } = await cropImageToBox(file, width, height, { mode: fit || "cover" });
+  const dataBase64 = dataUrl.split(",")[1];
+  const res = await fetch("/api/upload", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ filename: file.name, contentType, dataBase64 }),
+  });
+  if (!res.ok) throw new Error(await res.text());
+  const { url } = await res.json();
+  return url;
+}
+
+// 테두리(모서리)에서부터 흰색 계열 픽셀을 안쪽으로 연결해서(flood fill) 투명 처리한다.
+// 이미지 전체에서 흰 픽셀을 다 지우는 게 아니라 "테두리와 연결된" 흰 배경만 지우기 때문에,
+// 로고 글자처럼 피사체 안에 있는 흰색은 지워지지 않는다.
+// 반환하는 bgFraction이 아주 작으면(예: 박스 사진처럼 프레임을 꽉 채운 경우) 지울 배경이
+// 사실상 없다는 뜻이므로, 호출부에서 투명 PNG 대신 원래의 흰 배경 JPEG로 되돌린다.
+function floodFillWhiteBackground(canvas, ctx, { threshold = 235 } = {}) {
+  const { width, height } = canvas;
+  const imageData = ctx.getImageData(0, 0, width, height);
+  const data = imageData.data;
+  const isBg = (idx) => data[idx] >= threshold && data[idx + 1] >= threshold && data[idx + 2] >= threshold;
+  const visited = new Uint8Array(width * height);
+  const stack = [];
+
+  const pushIfBg = (x, y) => {
+    if (x < 0 || x >= width || y < 0 || y >= height) return;
+    const p = y * width + x;
+    if (visited[p]) return;
+    if (!isBg(p * 4)) return;
+    visited[p] = 1;
+    stack.push(p);
+  };
+
+  for (let x = 0; x < width; x++) { pushIfBg(x, 0); pushIfBg(x, height - 1); }
+  for (let y = 0; y < height; y++) { pushIfBg(0, y); pushIfBg(width - 1, y); }
+
+  let removedCount = 0;
+  while (stack.length) {
+    const p = stack.pop();
+    const x = p % width, y = (p / width) | 0;
+    data[p * 4 + 3] = 0;
+    removedCount++;
+    pushIfBg(x + 1, y);
+    pushIfBg(x - 1, y);
+    pushIfBg(x, y + 1);
+    pushIfBg(x, y - 1);
+  }
+
+  ctx.putImageData(imageData, 0, 0);
+  return removedCount / (width * height);
+}
+
+// 배경을 지우고 나면 피사체 둘레에 투명한 여백이 넓게 남는데(원본 스튜디오 사진이 원래
+// 그렇게 촬영됨), 이 여백을 그대로 두면 어디에 올려도(흰 배경이든 색 배경이든) "빈 공간이
+// 큰 네모"처럼 보인다. 남아있는(알파>0) 픽셀의 바운딩 박스로 크롭해서 피사체가 프레임을
+// 꽉 채우도록 만든다.
+function trimCanvasToContent(canvas, ctx, { padding = 0.03 } = {}) {
+  const { width, height } = canvas;
+  const data = ctx.getImageData(0, 0, width, height).data;
+  let minX = width, minY = height, maxX = -1, maxY = -1;
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      if (data[(y * width + x) * 4 + 3] > 0) {
+        if (x < minX) minX = x;
+        if (x > maxX) maxX = x;
+        if (y < minY) minY = y;
+        if (y > maxY) maxY = y;
+      }
+    }
+  }
+  if (maxX < minX || maxY < minY) return canvas; // 남아있는 내용이 없음 - 그대로 둔다
+  const padX = Math.round((maxX - minX + 1) * padding);
+  const padY = Math.round((maxY - minY + 1) * padding);
+  minX = Math.max(0, minX - padX);
+  minY = Math.max(0, minY - padY);
+  maxX = Math.min(width - 1, maxX + padX);
+  maxY = Math.min(height - 1, maxY + padY);
+  const cw = maxX - minX + 1, ch = maxY - minY + 1;
+  if (cw === width && ch === height) return canvas;
+  const trimmed = document.createElement("canvas");
+  trimmed.width = cw;
+  trimmed.height = ch;
+  trimmed.getContext("2d").drawImage(canvas, minX, minY, cw, ch, 0, 0, cw, ch);
+  return trimmed;
+}
+
+// 제품 대표 이미지와 브랜드 로고 전용 업로드: 규격 안에 맞춰 넣은 뒤(contain) 흰 배경을 예외 없이
+// 투명으로 지운 PNG로 저장한다. JPEG로 올려도 자동으로 누끼를 따서 PNG로 변환하고,
+// 지워진 배경만큼 여백을 잘라내 제품이 프레임을 꽉 채우게 한다.
+async function uploadProductImageTransparent(file, width, height, { maxBase64Length = 500000 } = {}) {
+  const result = await new Promise((resolve, reject) => {
+    const img = new Image();
+    const objectUrl = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(objectUrl);
+      const scale = Math.min(width / img.width, height / img.height, 1);
+      let dw = Math.round(img.width * scale);
+      let dh = Math.round(img.height * scale);
+
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+      const draw = () => {
+        canvas.width = dw;
+        canvas.height = dh;
+        ctx.clearRect(0, 0, dw, dh);
+        ctx.drawImage(img, 0, 0, img.width, img.height, 0, 0, dw, dh);
+      };
+      draw();
+
+      floodFillWhiteBackground(canvas, ctx);
+
+      const trimmedCanvas = trimCanvasToContent(canvas, ctx);
+      let dataUrl = trimmedCanvas.toDataURL("image/png");
+      let curCanvas = trimmedCanvas;
+      while (dataUrl.length > maxBase64Length && curCanvas.width > 200) {
+        const nextCanvas = document.createElement("canvas");
+        nextCanvas.width = Math.round(curCanvas.width * 0.85);
+        nextCanvas.height = Math.round(curCanvas.height * 0.85);
+        nextCanvas.getContext("2d").drawImage(curCanvas, 0, 0, nextCanvas.width, nextCanvas.height);
+        curCanvas = nextCanvas;
+        dataUrl = curCanvas.toDataURL("image/png");
+      }
+      resolve({ dataUrl, contentType: "image/png" });
+    };
+    img.onerror = reject;
+    img.src = objectUrl;
+  });
+
+  const dataBase64 = result.dataUrl.split(",")[1];
+  const res = await fetch("/api/upload", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ filename: file.name, contentType: result.contentType, dataBase64 }),
+  });
+  if (!res.ok) throw new Error(await res.text());
+  const { url } = await res.json();
+  return url;
+}
+
+// 어드민 폼에서 영문 항목을 비워두면 저장 시 한글 값을 자동 번역해 채운다.
+async function translateText(text) {
+  if (!text || !text.trim()) return "";
+  try {
+    const res = await fetch("/api/translate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text }),
+    });
+    if (!res.ok) return "";
+    const { translated } = await res.json();
+    return translated || "";
+  } catch {
+    return "";
+  }
+}
+
+function slugify(s) {
+  const cleaned = (s || "")
+    .toString()
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9가-힣]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+  return cleaned || "item-" + Date.now();
+}
+
+async function fetchJson(endpoint) {
+  const res = await fetch(endpoint, { cache: "no-store" });
+  if (!res.ok) throw new Error("불러오기 실패: " + endpoint);
+  return res.json();
+}
+
+// 지워진 브랜드/제품이 쓰던 업로드 이미지 id를 뽑아, 서버에 정리를 요청한다.
+// 서버가 다시 한 번 "다른 문서에서도 안 쓰는지" 확인한 뒤 지우므로,
+// 같은 이미지를 여러 곳에서 공유하는 경우에도 안전하다.
+function assetIdsIn(value) {
+  const json = typeof value === "string" ? value : JSON.stringify(value);
+  const ids = new Set();
+  for (const m of json.matchAll(/\/api\/asset\/([0-9a-fA-F-]{36})/g)) ids.add(m[1]);
+  return [...ids];
+}
+
+async function cleanupAssets(ids) {
+  if (!ids.length) return;
+  try {
+    await fetch("/api/assets-cleanup", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ids }),
+    });
+  } catch {
+    // 이미지 정리는 보조 작업이라, 실패해도 삭제 자체를 되돌리지는 않는다
+  }
+}
+
+async function putJson(endpoint, data) {
+  const res = await fetch(endpoint, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error(await res.text());
+}
+
+function formField(labelText, inputEl, required) {
+  return el("div", { class: "form-field" }, [
+    el("label", { text: labelText + (required ? " *" : "") }),
+    inputEl,
+  ]);
+}
+
+// ---------- Shared modal helper ----------
+let modalCounter = 0;
+
+function openModal(title, bodyEl, onSave) {
+  const overlay = el("div", { class: "admin-modal-overlay" });
+  const card = el("div", { class: "admin-modal-card" });
+  const status = el("div", { class: "editor-status" });
+  const cancelBtn = el("button", { class: "mini-btn", type: "button", text: "취소" });
+  const saveBtn = el("button", { class: "submit-btn", type: "button", text: "저장하기" });
+  cancelBtn.addEventListener("click", () => overlay.remove());
+  saveBtn.addEventListener("click", async () => {
+    saveBtn.disabled = true;
+    saveBtn.textContent = "저장 중...";
+    status.textContent = "";
+    status.className = "editor-status";
+    try {
+      await onSave();
+      overlay.remove();
+    } catch (e) {
+      status.textContent = "저장 실패: " + e.message;
+      status.className = "editor-status error";
+      saveBtn.disabled = false;
+      saveBtn.textContent = "저장하기";
+    }
+  });
+  card.appendChild(el("h3", { class: "media-manager-title", text: title }));
+  card.appendChild(bodyEl);
+  card.appendChild(status);
+  card.appendChild(el("div", { class: "modal-actions" }, [cancelBtn, saveBtn]));
+  overlay.appendChild(card);
+  overlay.addEventListener("click", (e) => {
+    if (e.target === overlay) overlay.remove();
+  });
+  document.body.appendChild(overlay);
+  return { overlay, status };
+}
+
+function imagePreview(url) {
+  const wrap = el("div", { class: "image-preview" });
+  if (url) wrap.appendChild(el("img", { src: url, alt: "" }));
+  else wrap.appendChild(el("span", { text: "이미지 미리보기" }));
+  return wrap;
+}
+
+// ---------- Brand form (shared by add + edit) ----------
+function buildBrandFields(prefill) {
+  const p = prefill || {};
+  const groupName = "brand-type-" + ++modalCounter;
+  const nameKo = el("input", { type: "text", placeholder: "예: 웰젠, 부명케어", value: p.nameKo || "" });
+  const nameEn = el("input", { type: "text", placeholder: "예: WELLZEN", value: p.nameEn || "" });
+  const typeOwn = el("input", { type: "radio", name: groupName, value: "own", checked: (p.type || "own") === "own" });
+  const typeImported = el("input", { type: "radio", name: groupName, value: "imported", checked: p.type === "imported" });
+  const tagline = el("input", { type: "text", placeholder: "예: 건강하고 행복한 반려생활", value: p.tagline || "" });
+  const taglineEn = el("input", { type: "text", placeholder: "예: Healthy & Happy Pet Care", value: p.taglineEn || "" });
+  const descKo = el("textarea", { rows: 2, placeholder: "브랜드에 대한 간단한 소개를 입력하세요.", text: p.descriptionKo || "" });
+  const descEn = el("textarea", { rows: 2, placeholder: "Enter brand description in English.", text: p.descriptionEn || "" });
+  const color = el("input", { type: "color", value: p.color || "#0066b3" });
+  const colorText = el("input", { type: "text", value: (p.color || "#0066B3").toUpperCase() });
+  color.addEventListener("input", () => (colorText.value = color.value.toUpperCase()));
+  colorText.addEventListener("change", () => {
+    if (/^#[0-9a-fA-F]{6}$/.test(colorText.value)) color.value = colorText.value;
+  });
+  const logoFile = el("input", { type: "file", accept: "image/*" });
+  let preview = imagePreview(p.logo);
+  const previewSlot = el("div", {}, [preview]);
+  logoFile.addEventListener("change", () => {
+    const f = logoFile.files[0];
+    if (!f) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const fresh = imagePreview(reader.result);
+      preview.replaceWith(fresh);
+      preview = fresh;
+    };
+    reader.readAsDataURL(f);
+  });
+  let currentLogo = p.logo || "";
+
+  const container = el("div", { class: "admin-form" }, [
+    el("div", { class: "form-row-2" }, [formField("브랜드명 (한글)", nameKo, true), formField("브랜드명 (영문)", nameEn)]),
+    formField(
+      "브랜드 유형 (노출될 메뉴/페이지 결정)",
+      el("div", { class: "radio-row" }, [
+        el("label", {}, [typeOwn, document.createTextNode(' 자사 브랜드 → "브랜드" 메뉴에 노출')]),
+        el("label", {}, [typeImported, document.createTextNode(' 수입 브랜드 → 브랜드 페이지의 "수입 브랜드" 그룹에 노출')]),
+      ])
+    ),
+    el("div", { class: "form-row-2" }, [formField("브랜드 슬로건 (한글)", tagline), formField("브랜드 슬로건 (영문)", taglineEn)]),
+    el("div", { class: "form-row-2" }, [formField("브랜드 설명 (한글)", descKo), formField("브랜드 설명 (영문)", descEn)]),
+    el("div", { class: "form-row-2" }, [
+      formField("브랜드 대표 테마 색상", el("div", { class: "color-row" }, [color, colorText])),
+      formField("브랜드 로고 이미지 첨부 (권장 400×200 · 잘리지 않게 여백을 두고 맞춤)", logoFile),
+    ]),
+    previewSlot,
+  ]);
+
+  return {
+    container,
+    validate() {
+      return nameKo.value.trim() ? null : "브랜드명(한글)은 필수입니다.";
+    },
+    async getBrand() {
+      let logo = currentLogo;
+      if (logoFile.files[0]) {
+        logo = await uploadProductImageTransparent(logoFile.files[0], 400, 200);
+      }
+      let descriptionEn = descEn.value.trim();
+      if (!descriptionEn && descKo.value.trim()) descriptionEn = await translateText(descKo.value.trim());
+      let taglineEnVal = taglineEn.value.trim();
+      if (!taglineEnVal && tagline.value.trim()) taglineEnVal = await translateText(tagline.value.trim());
+      return {
+        nameKo: nameKo.value.trim(),
+        nameEn: nameEn.value.trim(),
+        type: typeImported.checked ? "imported" : "own",
+        tagline: tagline.value.trim(),
+        taglineEn: taglineEnVal,
+        descriptionKo: descKo.value.trim(),
+        descriptionEn,
+        color: colorText.value,
+        logo,
+      };
+    },
+    reset() {
+      nameKo.value = "";
+      nameEn.value = "";
+      tagline.value = "";
+      taglineEn.value = "";
+      descKo.value = "";
+      descEn.value = "";
+      logoFile.value = "";
+      currentLogo = "";
+      const fresh = imagePreview("");
+      preview.replaceWith(fresh);
+      preview = fresh;
+      typeOwn.checked = true;
+      typeImported.checked = false;
+      colorText.value = "#0066B3";
+      color.value = "#0066b3";
+    },
+  };
+}
+
+// Brands live in one of two content files depending on type, and are
+// mirrored into the catalog's brand filter and (for in-house brands only)
+// the homepage teaser grid — every write keeps all three in sync.
+async function upsertBrand(fields, existingId) {
+  const data = await fields.getBrand();
+  const id = existingId || slugify(data.nameEn || data.nameKo);
+  const brand = { id, ...data };
+
+  // 자사/수입 브랜드는 brands-content 한 문서 안의 두 배열로 관리한다.
+  const brandsDoc = await fetchJson("/api/brands-content");
+  brandsDoc.brands = (brandsDoc.brands || []).filter((b) => b.id !== id);
+  brandsDoc.importedBrands = (brandsDoc.importedBrands || []).filter((b) => b.id !== id);
+  if (brand.type === "own") brandsDoc.brands.push(brand);
+  else brandsDoc.importedBrands.push(brand);
+  await putJson("/api/brands-content", brandsDoc);
+
+  const catalogData = await fetchJson("/api/catalog-content");
+  catalogData.brands = catalogData.brands || [];
+  const filterIdx = catalogData.brands.findIndex((b) => b.id === id);
+  const filterEntry = { id, label: brand.nameKo, labelEn: brand.nameEn || brand.nameKo };
+  if (filterIdx >= 0) catalogData.brands[filterIdx] = filterEntry;
+  else catalogData.brands.push(filterEntry);
+  await putJson("/api/catalog-content", catalogData);
+
+  const homeData = await fetchJson("/api/content");
+  homeData.brands = homeData.brands || [];
+  const homeIdx = homeData.brands.findIndex((b) => b.href === `brands.html#own-${id}`);
+  if (brand.type === "own") {
+    const teaser = {
+      name: brand.nameKo,
+      nameEn: brand.nameEn,
+      tagline: brand.descriptionKo,
+      taglineEn: brand.descriptionEn,
+      logo: brand.logo,
+      href: `brands.html#own-${id}`,
+    };
+    if (homeIdx >= 0) homeData.brands[homeIdx] = teaser;
+    else homeData.brands.push(teaser);
+  } else if (homeIdx >= 0) {
+    homeData.brands.splice(homeIdx, 1);
+  }
+  await putJson("/api/content", homeData);
+
+  return id;
+}
+
+async function deleteBrand(id) {
+  const brandsDoc = await fetchJson("/api/brands-content");
+  const removed = [...(brandsDoc.brands || []), ...(brandsDoc.importedBrands || [])].filter((b) => b.id === id);
+  brandsDoc.brands = (brandsDoc.brands || []).filter((b) => b.id !== id);
+  brandsDoc.importedBrands = (brandsDoc.importedBrands || []).filter((b) => b.id !== id);
+  await putJson("/api/brands-content", brandsDoc);
+
+  const catalogData = await fetchJson("/api/catalog-content");
+  catalogData.brands = (catalogData.brands || []).filter((b) => b.id !== id);
+  await putJson("/api/catalog-content", catalogData);
+
+  const homeData = await fetchJson("/api/content");
+  homeData.brands = (homeData.brands || []).filter((b) => b.href !== `brands.html#own-${id}`);
+  await putJson("/api/content", homeData);
+
+  await cleanupAssets(assetIdsIn(removed));
+}
+
+function openBrandEditModal(brand, panel) {
+  const fields = buildBrandFields(brand);
+  openModal("✏️ 브랜드 정보 수정", fields.container, async () => {
+    const err = fields.validate();
+    if (err) throw new Error(err);
+    await upsertBrand(fields, brand.id);
+    renderAddBrandForm(panel);
+  });
+}
+
+async function renderAddBrandForm(panel) {
+  panel.innerHTML = "";
+  panel.appendChild(el("p", { class: "admin-loading", text: "불러오는 중..." }));
+
+  const brandsDoc = await fetchJson("/api/brands-content").catch(() => ({ brands: [], importedBrands: [] }));
+  panel.innerHTML = "";
+
+  const fields = buildBrandFields(null);
+  const status = el("div", { class: "editor-status" });
+  const submitBtn = el("button", { class: "submit-btn", type: "button", text: "+ 신규 브랜드 등록 완료" });
+  submitBtn.addEventListener("click", async () => {
+    const err = fields.validate();
+    if (err) {
+      status.textContent = err;
+      status.className = "editor-status error";
+      return;
+    }
+    submitBtn.disabled = true;
+    submitBtn.textContent = "등록 중...";
+    status.textContent = "";
+    status.className = "editor-status";
+    try {
+      await upsertBrand(fields, null);
+      status.textContent = "브랜드가 등록되었습니다. 모든 방문자에게 즉시 반영됩니다.";
+      status.className = "editor-status success";
+      fields.reset();
+      renderAddBrandForm(panel);
+    } catch (e) {
+      status.textContent = "등록 실패: " + e.message;
+      status.className = "editor-status error";
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = "+ 신규 브랜드 등록 완료";
+    }
+  });
+
+  panel.appendChild(
+    el("div", { class: "admin-form" }, [
+      el("h3", { class: "media-manager-title", text: "🏷️ 브랜드 정보 입력" }),
+      fields.container,
+      submitBtn,
+      status,
+    ])
+  );
+
+  const allBrands = [
+    ...(brandsDoc.brands || []).map((b) => ({ ...b, type: "own" })),
+    ...(brandsDoc.importedBrands || []).map((b) => ({ ...b, type: "imported" })),
+  ];
+  const listWrap = el("div", { class: "admin-list-panel" });
+  listWrap.appendChild(el("h3", { class: "media-manager-title", text: `📋 등록된 브랜드 목록 (${allBrands.length}개)` }));
+  const list = el("div", { class: "admin-item-list" });
+  allBrands.forEach((b) => {
+    const editBtn = el("button", { class: "mini-btn", type: "button", text: "✏️ 수정" });
+    editBtn.addEventListener("click", () => openBrandEditModal(b, panel));
+    const delBtn = el("button", { class: "mini-btn danger", type: "button", text: "🗑 삭제" });
+    delBtn.addEventListener("click", async () => {
+      if (!confirm(`'${b.nameKo}' 브랜드를 삭제할까요?`)) return;
+      await deleteBrand(b.id);
+      renderAddBrandForm(panel);
+    });
+    list.appendChild(
+      el("div", { class: "admin-item-row" }, [
+        el("div", { class: "admin-item-thumb" }, b.logo ? [el("img", { src: b.logo, alt: "" })] : []),
+        el("div", { class: "admin-item-info" }, [
+          el("div", { class: "admin-item-title" }, [
+            document.createTextNode(`${b.nameKo} (${b.nameEn || ""}) `),
+            el("span", { class: "admin-badge " + (b.type === "own" ? "badge-own" : "badge-imported"), text: b.type === "own" ? "자사브랜드" : "수입브랜드" }),
+          ]),
+          el("div", { class: "admin-item-sub", text: b.tagline || "" }),
+        ]),
+        el("div", { class: "admin-item-actions" }, [editBtn, delBtn]),
+      ])
+    );
+  });
+  listWrap.appendChild(list);
+  panel.appendChild(listWrap);
+}
+
+// ---------- Product form (shared by add + edit) ----------
+function buildProductFields(prefill, allBrands, categories) {
+  const p = prefill || {};
+  const brandSelect = el(
+    "select",
+    {},
+    [el("option", { value: "", text: "-- 브랜드 선택 --" }), ...allBrands.map((b) => el("option", { value: b.id, text: b.nameKo }))]
+  );
+  brandSelect.value = p.brandId || "";
+  const categorySelect = el("select", {}, categories.map((c) => el("option", { value: c.id, text: c.label })));
+  if (p.category) categorySelect.value = p.category;
+  const nameKo = el("input", { type: "text", placeholder: "예: 데이스포 프레시 츄르 연어", value: p.nameKo || "" });
+  const nameEn = el("input", { type: "text", placeholder: "예: Dayspo Fresh Churu Salmon", value: p.nameEn || "" });
+  const petType = el("select", {}, [
+    el("option", { value: "dog", text: "강아지 (Dog)" }),
+    el("option", { value: "cat", text: "고양이 (Cat)" }),
+    el("option", { value: "all", text: "공통 (All)" }),
+  ]);
+  petType.value = p.petType || "dog";
+  const spec = el("input", { type: "text", placeholder: "예: 1.2kg (200g * 6)", value: p.spec || "" });
+  const code = el("input", { type: "text", placeholder: "예: 8809565905407", value: p.code || "" });
+
+  const mainImage = el("input", { type: "file", accept: "image/*" });
+  let mainPreview = imagePreview(p.image);
+  const mainPreviewSlot = el("div", {}, [mainPreview]);
+  mainImage.addEventListener("change", () => {
+    const f = mainImage.files[0];
+    if (!f) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const fresh = imagePreview(reader.result);
+      mainPreview.replaceWith(fresh);
+      mainPreview = fresh;
+    };
+    reader.readAsDataURL(f);
+  });
+  let currentImage = p.image || "";
+
+  const detailImages = el("input", { type: "file", accept: "image/*", multiple: true });
+  const detailPreview = el("div", { class: "image-preview-row" }, (p.detailImages || []).map((src) => el("img", { src, alt: "" })));
+  let currentDetailImages = p.detailImages || [];
+
+  const buyLink = el("input", { type: "text", placeholder: "https://...", value: p.buyLink || "" });
+  const b2bLink = el("input", { type: "text", placeholder: "https://... (입력하면 B2B 구매하기 버튼이 노출됩니다)", value: p.b2bLink || "" });
+  const itemNo = el("input", { type: "text", placeholder: "예: NO.67332", value: p.itemNo || "" });
+  const features = el("textarea", {
+    rows: 4,
+    placeholder: "예:\n· 생후 2개월 이상 전연령 반려견 사료\n· 가수분해 오리 원료 사용\n· 관절 건강에 도움을 주는 초유 첨가",
+    text: (p.features || []).join("\n"),
+  });
+  const ingredients = el("textarea", { rows: 3, placeholder: "사용된 상세 원료와 성분 정보를 작성해주세요.", text: p.ingredients || "" });
+  const shelfLife = el("input", { type: "text", value: p.shelfLife || "제조일로부터 18개월까지" });
+  const origin = el("input", { type: "text", value: p.origin || "대한민국" });
+
+  const CATEGORIES_WITH_NUTRITION = ["사료", "간식"];
+  const nut = p.nutrition || {};
+  const protein = el("input", { type: "text", placeholder: "예: 24.0% (Min)", value: nut.protein || "" });
+  const fat = el("input", { type: "text", placeholder: "예: 14.0% (Min)", value: nut.fat || "" });
+  const fiber = el("input", { type: "text", placeholder: "예: 4.0% (Max)", value: nut.fiber || "" });
+  const moisture = el("input", { type: "text", placeholder: "예: 10.0% (Max)", value: nut.moisture || "" });
+  const nutritionGroup = el("div", { class: "form-row-3" }, [
+    formField("조단백", protein),
+    formField("조지방", fat),
+    formField("조섬유", fiber),
+  ]);
+  const nutritionGroup2 = el("div", { class: "form-row-3" }, [formField("수분", moisture)]);
+  const nutritionWrap = el("div", {}, [nutritionGroup, nutritionGroup2]);
+  function syncNutritionVisibility() {
+    nutritionWrap.hidden = !CATEGORIES_WITH_NUTRITION.includes(categorySelect.value);
+  }
+  categorySelect.addEventListener("change", syncNutritionVisibility);
+  syncNutritionVisibility();
+
+  const container = el("div", { class: "admin-form" }, [
+    el("div", { class: "form-row-2" }, [formField("소속 브랜드 선택", brandSelect, true), formField("제품 카테고리", categorySelect, true)]),
+    el("div", { class: "form-row-2" }, [formField("제품명 (한글)", nameKo, true), formField("제품명 (영문)", nameEn)]),
+    el("div", { class: "form-row-3" }, [formField("반려동물 구분", petType), formField("제품 규격 / 용량", spec), formField("상품 바코드 / 코드", code)]),
+    formField("품번 (Item No. · 제품 카드 하단에 표시)", itemNo),
+    formField("제품 대표 이미지 첨부 (권장 1000×1000 · 잘리지 않게 여백을 두고 맞춤)", mainImage),
+    mainPreviewSlot,
+    formField("상세정보 페이지 이미지 첨부 (여러 장 가능 · 세로로 긴 이미지도 잘리지 않습니다)", detailImages),
+    detailPreview,
+    el("div", { class: "form-row-2" }, [formField("바로 구매하기 링크 (URL)", buyLink), formField("B2B 구매하기 링크 (URL)", b2bLink)]),
+    formField("제품 주요 특징 (줄바꿈으로 구분)", features),
+    el("div", { class: "form-row-2" }, [formField("유통기한", shelfLife), formField("제조국 / 원산지", origin)]),
+    formField("원료 정보", ingredients),
+    formField("등록 성분량 (사료/간식만 해당)", nutritionWrap),
+  ]);
+
+  return {
+    container,
+    validate() {
+      return brandSelect.value && nameKo.value.trim() ? null : "소속 브랜드와 제품명(한글)은 필수입니다.";
+    },
+    async getProduct() {
+      let image = currentImage;
+      if (mainImage.files[0]) {
+        image = await uploadProductImageTransparent(mainImage.files[0], 1000, 1000);
+      }
+      let detailUrls = currentDetailImages;
+      if (detailImages.files.length) {
+        detailUrls = [];
+        for (const f of detailImages.files) {
+          const { dataUrl, contentType } = await compressImage(f);
+          const res = await fetch("/api/upload", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ filename: f.name, contentType, dataBase64: dataUrl.split(",")[1] }),
+          });
+          if (!res.ok) throw new Error(await res.text());
+          detailUrls.push((await res.json()).url);
+        }
+      }
+      const nameKoVal = nameKo.value.trim();
+      let nameEnVal = nameEn.value.trim();
+      if (!nameEnVal && nameKoVal) nameEnVal = await translateText(nameKoVal);
+
+      const ingredientsVal = ingredients.value.trim();
+      let ingredientsEnVal = p.ingredientsEn || "";
+      if (!ingredientsEnVal && ingredientsVal) ingredientsEnVal = await translateText(ingredientsVal);
+
+      const originVal = origin.value.trim();
+      let originEnVal = p.originEn || "";
+      if (!originEnVal && originVal) originEnVal = await translateText(originVal);
+
+      const shelfLifeVal = shelfLife.value.trim();
+      let shelfLifeEnVal = p.shelfLifeEn || "";
+      if (!shelfLifeEnVal && shelfLifeVal) shelfLifeEnVal = await translateText(shelfLifeVal);
+
+      const featuresVal = features.value
+        .split("\n")
+        .map((s) => s.replace(/^[·\-•]\s*/, "").trim())
+        .filter(Boolean);
+      let featuresEnVal = p.featuresEn;
+      if ((!featuresEnVal || !featuresEnVal.length) && featuresVal.length) {
+        featuresEnVal = await Promise.all(featuresVal.map((f) => translateText(f)));
+      }
+
+      const category = categorySelect.value;
+      function buildNutrition() {
+        const values = { protein: protein.value.trim(), fat: fat.value.trim(), fiber: fiber.value.trim(), moisture: moisture.value.trim() };
+        if (!CATEGORIES_WITH_NUTRITION.includes(category)) return null;
+        if (!values.protein && !values.fat && !values.fiber && !values.moisture) return null;
+        return values;
+      }
+
+      return {
+        nameKo: nameKoVal,
+        nameEn: nameEnVal,
+        brandId: brandSelect.value,
+        code: code.value.trim(),
+        spec: spec.value.trim(),
+        shelfLife: shelfLifeVal,
+        shelfLifeEn: shelfLifeEnVal,
+        features: featuresVal,
+        featuresEn: featuresEnVal || [],
+        ingredients: ingredientsVal,
+        ingredientsEn: ingredientsEnVal,
+        origin: originVal,
+        originEn: originEnVal,
+        category,
+        petType: petType.value,
+        image,
+        detailImages: detailUrls,
+        buyLink: buyLink.value.trim(),
+        b2bLink: b2bLink.value.trim(),
+        itemNo: itemNo.value.trim(),
+        nutrition: buildNutrition(),
+      };
+    },
+    reset() {
+      nameKo.value = "";
+      nameEn.value = "";
+      spec.value = "";
+      code.value = "";
+      buyLink.value = "";
+      b2bLink.value = "";
+      itemNo.value = "";
+      features.value = "";
+      ingredients.value = "";
+      mainImage.value = "";
+      detailImages.value = "";
+      currentImage = "";
+      currentDetailImages = [];
+      const fresh = imagePreview("");
+      mainPreview.replaceWith(fresh);
+      mainPreview = fresh;
+      detailPreview.innerHTML = "";
+      shelfLife.value = "제조일로부터 18개월까지";
+      origin.value = "대한민국";
+      protein.value = "";
+      fat.value = "";
+      fiber.value = "";
+      moisture.value = "";
+      syncNutritionVisibility();
+    },
+  };
+}
+
+async function upsertProduct(fields, existingId) {
+  const data = await fields.getProduct();
+  const id = existingId || slugify(data.nameEn || data.nameKo);
+  const product = { id, ...data };
+  const catalogData = await fetchJson("/api/catalog-content");
+  catalogData.products = catalogData.products || [];
+  const idx = catalogData.products.findIndex((x) => x.id === id);
+  if (idx >= 0) catalogData.products[idx] = product;
+  else catalogData.products.push(product);
+  await putJson("/api/catalog-content", catalogData);
+  return id;
+}
+
+async function deleteProduct(id) {
+  const catalogData = await fetchJson("/api/catalog-content");
+  const removed = (catalogData.products || []).filter((p) => p.id === id);
+  catalogData.products = (catalogData.products || []).filter((p) => p.id !== id);
+  await putJson("/api/catalog-content", catalogData);
+  await cleanupAssets(assetIdsIn(removed));
+}
+
+function openProductEditModal(product, allBrands, categories, panel) {
+  const fields = buildProductFields(product, allBrands, categories);
+  openModal("✏️ 제품 정보 전체 수정", fields.container, async () => {
+    const err = fields.validate();
+    if (err) throw new Error(err);
+    await upsertProduct(fields, product.id);
+    renderAddProductForm(panel);
+  });
+}
+
+async function renderAddProductForm(panel) {
+  panel.innerHTML = "";
+  panel.appendChild(el("p", { class: "admin-loading", text: "불러오는 중..." }));
+
+  const [brandsDoc, catalogData] = await Promise.all([
+    fetchJson("/api/brands-content").catch(() => ({ brands: [], importedBrands: [] })),
+    fetchJson("/api/catalog-content"),
+  ]);
+  panel.innerHTML = "";
+  const allBrands = [...(brandsDoc.brands || []), ...(brandsDoc.importedBrands || [])];
+  const brandLabel = Object.fromEntries(allBrands.map((b) => [b.id, b.nameKo]));
+  const categories = (catalogData.categories || []).filter((c) => c.id !== "all");
+  const products = catalogData.products || [];
+
+  const fields = buildProductFields(null, allBrands, categories);
+  const status = el("div", { class: "editor-status" });
+  const submitBtn = el("button", { class: "submit-btn", type: "button", text: "📦 신규 제품 등록 완료" });
+  submitBtn.addEventListener("click", async () => {
+    const err = fields.validate();
+    if (err) {
+      status.textContent = err;
+      status.className = "editor-status error";
+      return;
+    }
+    submitBtn.disabled = true;
+    submitBtn.textContent = "등록 중...";
+    status.textContent = "";
+    status.className = "editor-status";
+    try {
+      await upsertProduct(fields, null);
+      status.textContent = "제품이 등록되었습니다. 모든 방문자에게 즉시 반영됩니다.";
+      status.className = "editor-status success";
+      fields.reset();
+      renderAddProductForm(panel);
+    } catch (e) {
+      status.textContent = "등록 실패: " + e.message;
+      status.className = "editor-status error";
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = "📦 신규 제품 등록 완료";
+    }
+  });
+
+  panel.appendChild(
+    el("div", { class: "admin-form" }, [
+      el("h3", { class: "media-manager-title", text: "📦 신제품 정보 입력" }),
+      fields.container,
+      submitBtn,
+      status,
+    ])
+  );
+
+  const listWrap = el("div", { class: "admin-list-panel" });
+  listWrap.appendChild(el("h3", { class: "media-manager-title", text: `📋 등록된 제품 목록 (${products.length}개)` }));
+  const brandFilter = el(
+    "select",
+    {},
+    [el("option", { value: "", text: "전체 브랜드" }), ...allBrands.map((b) => el("option", { value: b.id, text: b.nameKo }))]
+  );
+  const search = el("input", { type: "text", placeholder: "제품명 검색..." });
+  const list = el("div", { class: "admin-item-list" });
+
+  function renderList() {
+    list.innerHTML = "";
+    const q = search.value.trim().toLowerCase();
+    const filtered = products.filter((p) => {
+      if (brandFilter.value && p.brandId !== brandFilter.value) return false;
+      if (q && !`${p.nameKo} ${p.nameEn || ""}`.toLowerCase().includes(q)) return false;
+      return true;
+    });
+    filtered.forEach((p) => {
+      const editBtn = el("button", { class: "mini-btn", type: "button", text: "✏️ 수정" });
+      editBtn.addEventListener("click", () => openProductEditModal(p, allBrands, categories, panel));
+      const delBtn = el("button", { class: "mini-btn danger", type: "button", text: "🗑 삭제" });
+      delBtn.addEventListener("click", async () => {
+        if (!confirm(`'${p.nameKo}' 제품을 삭제할까요?`)) return;
+        await deleteProduct(p.id);
+        renderAddProductForm(panel);
+      });
+      list.appendChild(
+        el("div", { class: "admin-item-row" }, [
+          el("div", { class: "admin-item-thumb" }, p.image ? [el("img", { src: p.image, alt: "" })] : []),
+          el("div", { class: "admin-item-info" }, [
+            el("div", { class: "admin-item-title", text: p.nameKo }),
+            el("div", { class: "admin-item-sub", text: `${brandLabel[p.brandId] || p.brandId} · ${p.category} · ${p.code || ""}` }),
+          ]),
+          el("div", { class: "admin-item-actions" }, [editBtn, delBtn]),
+        ])
+      );
+    });
+  }
+  brandFilter.addEventListener("change", renderList);
+  search.addEventListener("input", renderList);
+  listWrap.appendChild(el("div", { class: "list-toolbar" }, [brandFilter, search]));
+  listWrap.appendChild(list);
+  panel.appendChild(listWrap);
+  renderList();
+}
+
+// 관리자 비밀번호 변경 + 로그인/변경 이력(IP 포함) — 콘텐츠 편집과는 별개인 계정 보안 섹션.
+async function renderSecuritySection(panel) {
+  panel.innerHTML = "";
+
+  const currentInput = el("input", { type: "password", required: true });
+  const nextInput = el("input", { type: "password", required: true });
+  const confirmInput = el("input", { type: "password", required: true });
+  const pwStatus = el("div", { class: "editor-status" });
+  const pwSubmit = el("button", { class: "submit-btn", type: "button", text: "비밀번호 변경" });
+
+  pwSubmit.addEventListener("click", async () => {
+    pwStatus.textContent = "";
+    pwStatus.className = "editor-status";
+    if (nextInput.value.length < 4) {
+      pwStatus.textContent = "새 비밀번호는 4자 이상이어야 합니다.";
+      pwStatus.className = "editor-status error";
+      return;
+    }
+    if (nextInput.value !== confirmInput.value) {
+      pwStatus.textContent = "새 비밀번호가 서로 일치하지 않습니다.";
+      pwStatus.className = "editor-status error";
+      return;
+    }
+    pwSubmit.disabled = true;
+    pwSubmit.textContent = "변경 중...";
+    try {
+      const res = await fetch("/api/change-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ currentPassword: currentInput.value, newPassword: nextInput.value }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        pwStatus.textContent = data.error || "비밀번호 변경에 실패했습니다.";
+        pwStatus.className = "editor-status error";
+        return;
+      }
+      pwStatus.textContent = "비밀번호가 변경되었습니다.";
+      pwStatus.className = "editor-status success";
+      currentInput.value = "";
+      nextInput.value = "";
+      confirmInput.value = "";
+      loadAuditLog();
+    } catch {
+      pwStatus.textContent = "비밀번호 변경에 실패했습니다.";
+      pwStatus.className = "editor-status error";
+    } finally {
+      pwSubmit.disabled = false;
+      pwSubmit.textContent = "비밀번호 변경";
+    }
+  });
+
+  const pwPanel = el("div", { class: "admin-panel" }, [
+    el("h2", { text: "🔑 관리자 비밀번호 변경" }),
+    el("div", { class: "admin-form" }, [
+      el("div", { class: "form-field" }, [el("label", { text: "현재 비밀번호" }), currentInput]),
+      el("div", { class: "form-field" }, [el("label", { text: "새 비밀번호" }), nextInput]),
+      el("div", { class: "form-field" }, [el("label", { text: "새 비밀번호 확인" }), confirmInput]),
+      pwStatus,
+      pwSubmit,
+    ]),
+  ]);
+
+  const historyBody = el("div");
+  const refreshBtn = el("button", { class: "lang-btn", type: "button", text: "🔄 새로고침" });
+  refreshBtn.addEventListener("click", loadAuditLog);
+  const historyPanel = el("div", { class: "admin-panel" }, [
+    el("div", { class: "admin-panel-head" }, [el("h2", { text: "🕵️ 로그인·변경 이력" }), refreshBtn]),
+    historyBody,
+  ]);
+
+  panel.appendChild(pwPanel);
+  panel.appendChild(historyPanel);
+
+  const ACTION_LABELS = {
+    login_success: "로그인 성공",
+    login_fail: "로그인 실패",
+    password_change: "비밀번호 변경",
+  };
+
+  async function loadAuditLog() {
+    historyBody.innerHTML = "";
+    historyBody.appendChild(el("p", { class: "admin-loading", text: "불러오는 중..." }));
+    let logs;
+    try {
+      const res = await fetch("/api/audit-log", { cache: "no-store" });
+      const data = await res.json();
+      logs = data.logs || [];
+    } catch {
+      historyBody.innerHTML = "";
+      historyBody.appendChild(el("p", { class: "admin-error", text: "이력을 불러오지 못했습니다." }));
+      return;
+    }
+    historyBody.innerHTML = "";
+    if (logs.length === 0) {
+      historyBody.appendChild(el("p", { class: "admin-empty", text: "아직 기록이 없습니다." }));
+      return;
+    }
+    const table = el("table", { style: "width:100%;border-collapse:collapse;font-size:13px" });
+    const thead = el("tr", { style: "border-bottom:2px solid var(--line);text-align:left" }, [
+      el("th", { style: "padding:8px 12px", text: "시각" }),
+      el("th", { style: "padding:8px 12px", text: "IP 주소" }),
+      el("th", { style: "padding:8px 12px", text: "동작" }),
+    ]);
+    table.appendChild(el("thead", {}, [thead]));
+    const tbody = el("tbody");
+    logs.forEach((log) => {
+      tbody.appendChild(
+        el("tr", { style: "border-bottom:1px solid var(--bg-alt)" }, [
+          el("td", { style: "padding:8px 12px;white-space:nowrap", text: log.created_at }),
+          el("td", { style: "padding:8px 12px;font-family:monospace", text: log.ip }),
+          el("td", { style: "padding:8px 12px", text: ACTION_LABELS[log.action] || log.action }),
+        ])
+      );
+    });
+    table.appendChild(tbody);
+    historyBody.appendChild(table);
+  }
+
+  loadAuditLog();
+}
+
+async function loadSection(id) {
+  if (id === "add-brand") return renderAddBrandForm(qs("#editor-panel"));
+  if (id === "add-product") return renderAddProductForm(qs("#editor-panel"));
+  if (id === "security") return renderSecuritySection(qs("#editor-panel"));
+
+  const section = SECTIONS.find((s) => s.id === id);
+  const panel = qs("#editor-panel");
+  panel.innerHTML = "";
+  panel.appendChild(el("p", { class: "admin-loading", text: "불러오는 중..." }));
+
+  let data;
+  try {
+    const res = await fetch(section.endpoint, { cache: "no-store" });
+    data = await res.json();
+  } catch {
+    panel.innerHTML = "";
+    panel.appendChild(el("p", { class: "admin-error", text: "콘텐츠를 불러오지 못했습니다." }));
+    return;
+  }
+
+  // 예전에는 원시 JSON을 직접 고치는 방식이었지만, 지금은 자리마다 알맞은
+  // 입력칸을 만들어 보여준다 (문구는 한글만 넣으면 영문은 저장 시 자동 번역).
+  renderContentForm(panel, id, data, section.endpoint, section.preview);
+}
+
+async function loadInquiries() {
+  const list = qs("#inquiry-list");
+  list.innerHTML = "";
+  list.appendChild(el("p", { class: "admin-loading", text: "불러오는 중..." }));
+  let items;
+  try {
+    const res = await fetch("/api/contact", { cache: "no-store" });
+    if (!res.ok) throw new Error();
+    items = await res.json();
+  } catch {
+    list.innerHTML = "";
+    list.appendChild(el("p", { class: "admin-error", text: "문의 내역을 불러오지 못했습니다." }));
+    return;
+  }
+
+  list.innerHTML = "";
+  qs("#inquiry-count").textContent = `총 ${items.length}건 (미확인 ${items.filter((i) => !i.read).length}건)`;
+  if (items.length === 0) {
+    list.appendChild(el("p", { class: "admin-empty", text: "접수된 문의가 없습니다." }));
+    return;
+  }
+  items.forEach((item) => list.appendChild(inquiryCard(item)));
+}
+
+function inquiryCard(item) {
+  const date = new Date(item.submittedAt).toLocaleString("ko-KR");
+  const card = el("div", { class: "inquiry-card" + (item.read ? "" : " unread") }, [
+    el("div", { class: "inquiry-head" }, [
+      el("div", {}, [
+        el("strong", { text: item.company }),
+        el("span", { class: "inquiry-name", text: ` · ${item.name}` }),
+      ]),
+      el("time", { text: date }),
+    ]),
+    el("div", { class: "inquiry-meta" }, [
+      el("span", { text: `연락처: ${item.phone}` }),
+      item.email ? el("span", { text: `이메일: ${item.email}` }) : null,
+    ]),
+    el("p", { class: "inquiry-message", text: item.message }),
+  ]);
+
+  const actions = el("div", { class: "inquiry-actions" });
+  const toggleBtn = el("button", { class: "mini-btn", type: "button", text: item.read ? "안읽음으로 표시" : "읽음으로 표시" });
+  toggleBtn.addEventListener("click", () => updateInquiry(item.id, item.read ? "markUnread" : "markRead"));
+  const deleteBtn = el("button", { class: "mini-btn danger", type: "button", text: "삭제" });
+  deleteBtn.addEventListener("click", () => {
+    if (confirm("이 문의를 삭제할까요?")) updateInquiry(item.id, "delete");
+  });
+  actions.appendChild(toggleBtn);
+  actions.appendChild(deleteBtn);
+  card.appendChild(actions);
+  return card;
+}
+
+async function updateInquiry(id, action) {
+  await fetch("/api/contact", {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ id, action }),
+  });
+  loadInquiries();
+}
+
+function setupLogin() {
+  const form = qs("#login-form");
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const password = qs("#login-password").value;
+    const errorEl = qs("#login-error");
+    errorEl.hidden = true;
+    const btn = form.querySelector("button[type=submit]");
+    btn.disabled = true;
+    btn.textContent = "확인 중...";
+    try {
+      const res = await fetch("/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password }),
+      });
+      if (!res.ok) {
+        errorEl.textContent = "비밀번호가 올바르지 않습니다.";
+        errorEl.hidden = false;
+        return;
+      }
+      qs("#login-password").value = "";
+      showDashboard();
+      setupIdleLogout();
+    } catch {
+      errorEl.textContent = "로그인 중 오류가 발생했습니다.";
+      errorEl.hidden = false;
+    } finally {
+      btn.disabled = false;
+      btn.textContent = "로그인";
+    }
+  });
+}
+
+function setupLogout() {
+  qs("#logout-btn").addEventListener("click", async () => {
+    await fetch("/api/logout", { method: "POST" });
+    location.reload();
+  });
+}
+
+// 은행 앱처럼, 15분 동안 마우스/키보드 조작이 없으면 자동으로 로그아웃한다.
+// 로그인 성공 시와, 이미 유효한 세션으로 열렸을 때 둘 다에서 호출되므로 중복 등록을 막는다.
+let idleLogoutArmed = false;
+function setupIdleLogout() {
+  if (idleLogoutArmed) return;
+  idleLogoutArmed = true;
+  const IDLE_LIMIT_MS = 15 * 60 * 1000;
+  let idleTimer = setTimeout(autoLogout, IDLE_LIMIT_MS);
+  async function autoLogout() {
+    await fetch("/api/logout", { method: "POST" });
+    location.reload();
+  }
+  ["mousemove", "keydown", "click", "scroll"].forEach((ev) => {
+    window.addEventListener(ev, () => {
+      clearTimeout(idleTimer);
+      idleTimer = setTimeout(autoLogout, IDLE_LIMIT_MS);
+    });
+  });
+}
+
+(async function init() {
+  setupLogin();
+  setupLogout();
+  const authed = await checkSession();
+  if (authed) {
+    showDashboard();
+    setupIdleLogout();
+  } else {
+    showLogin();
+  }
+})();

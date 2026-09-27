@@ -1,0 +1,19 @@
+name = "boomyung-site"
+compatibility_date = "2024-09-01"
+pages_build_output_dir = "."
+
+[[d1_databases]]
+binding = "DB"
+database_name = "boomyung-siteg-db"
+database_id = "94b98645-8c73-4e69-ae79-160661ce859f"
+
+[ai]
+binding = "AI"
+
+# ADMIN_PASSWORD is set as a secret (not in this file):
+#   npx wrangler pages secret put ADMIN_PASSWORD --project-name=bmtest7
+#
+# If the D1 binding above isn't picked up automatically by a git-triggered
+# Pages build, add it manually once in the dashboard:
+# Workers & Pages -> bmtest7 -> Settings -> Functions -> D1 database bindings
+# -> variable name "DB" bound to "boomyung-siteg-db".

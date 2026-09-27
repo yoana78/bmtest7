@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/png" href="./favicon.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>파트너·네트워크 | (주)부명 BOOMYUNG</title>
+    <meta name="description" content="(주)부명이 참가한 국내외 박람회와 전국 유통 채널, 지역 대리점 네트워크를 소개합니다." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="./css/main.css" />
+    <link rel="stylesheet" href="./css/pages.css" />
+    <script>
+      // 모션 레이어: 첫 방문 인트로/페이지 전환 커튼이 뜨기 전 본문이 번쩍 보이지 않도록 먼저 표시한다
+      (function () {
+        try {
+          if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+          var h = document.documentElement;
+          if (!sessionStorage.getItem("bm-intro")) h.classList.add("mx-intro");
+          else if (sessionStorage.getItem("bm-transit")) h.classList.add("mx-enter");
+          // 스크립트가 로드되지 않아도 화면이 가려진 채 남지 않게 하는 안전장치
+          setTimeout(function () { h.classList.remove("mx-intro", "mx-enter"); }, 6000);
+        } catch (e) {}
+      })();
+    </script>
+    <link rel="stylesheet" href="./css/motion.css" />
+  </head>
+  <body>
+    <header class="site-header" id="site-header">
+      <a href="index.html" class="brand-mark">
+        <img src="./assets/boomyung_ci_logo.png" alt="BOOMYUNG" />
+        <span>(주)부명</span>
+      </a>
+      <nav class="main-nav">
+        <a href="index.html">홈</a>
+        <a href="about.html">회사소개</a>
+        <a href="manufacturing.html">제조·역량</a>
+        <div class="nav-mega" id="nav-mega">
+          <a href="brands.html" class="nav-mega-trigger">브랜드</a>
+          <div class="nav-mega-panel">
+            <div class="nav-mega-bubble">
+              <div class="nav-mega-title" data-mega-title="own"></div>
+              <div class="nav-mega-grid" id="mega-own"></div>
+              <div class="nav-mega-title" data-mega-title="imported"></div>
+              <div class="nav-mega-grid" id="mega-imported"></div>
+            </div>
+          </div>
+        </div>
+        <a href="catalog.html">제품 카탈로그</a>
+        <a href="network.html">파트너·네트워크</a>
+      </nav>
+      <div class="header-right">
+        <button class="lang-btn" type="button">EN</button>
+        <a href="contact.html" class="lang-btn">문의하기</a>
+      <button class="menu-btn" id="menu-btn" type="button" aria-label="메뉴 열기"><span></span><span></span><span></span></button>
+      </div>
+    </header>
+
+    <div class="mobile-nav" id="mobile-nav">
+      <nav>
+        <a href="index.html">홈</a>
+        <a href="about.html">회사소개</a>
+        <a href="manufacturing.html">제조·역량</a>
+        <a href="brands.html">브랜드</a>
+        <a href="catalog.html">제품 카탈로그</a>
+        <a href="network.html">파트너·네트워크</a>
+        <a href="contact.html">문의하기</a>
+      </nav>
+    </div>
+
+    <main>
+      <section class="page-hero" id="page-hero-root">
+        <img class="hero-bg" src="assets/trust_hero.png" alt="" />
+        <div class="wrap">
+          <p class="eyebrow"><span></span></p>
+          <h1></h1>
+          <p class="hero-body"></p>
+        </div>
+      </section>
+
+
+
+      <section class="section-pad" id="expo-root">
+        <div class="wrap">
+          <p class="eyebrow"><span>GLOBAL EXHIBITION</span></p>
+          <h2 class="section-title"></h2>
+          <div id="expo-list"></div>
+        </div>
+      </section>
+
+      <section class="section-pad" id="retail-root" style="background: var(--bg-alt)">
+        <div class="wrap">
+          <p class="eyebrow"><span>PARTNERSHIP</span></p>
+          <h2 class="section-title"></h2>
+          <p class="section-body"></p>
+          <div class="logo-flow-grid" id="retail-grid"></div>
+        </div>
+      </section>
+
+      <section class="section-pad" id="distributors-root">
+        <div class="wrap">
+          <p class="eyebrow"><span>PARTNERSHIP</span></p>
+          <h2 class="section-title"></h2>
+          <p class="section-body"></p>
+          <div class="logo-flow-grid" id="distributor-grid"></div>
+        </div>
+      </section>
+
+      <!-- 수출 파트너십: 스크롤에 따라 지구본 항로가 그려지는 마무리 섹션 -->
+      <section class="export-story" id="export-root">
+        <div class="export-stage">
+          <img class="export-background" src="assets/network/export-port.jpg" alt="" />
+          <div class="export-shade"></div>
+          <div class="export-copy">
+            <span class="story-eyebrow"></span>
+            <h2></h2>
+            <p></p>
+            <a href="contact.html" class="export-btn"></a>
+          </div>
+          <div class="export-network" aria-hidden="true">
+            <svg viewBox="0 0 1000 600">
+              <defs>
+                <radialGradient id="globe-fill">
+                  <stop stop-color="#72d6ee" stop-opacity=".18" />
+                  <stop offset="1" stop-color="#0a4269" stop-opacity=".06" />
+                </radialGradient>
+              </defs>
+              <circle cx="590" cy="310" r="240" fill="url(#globe-fill)" stroke="#9de5ff44" />
+              <ellipse cx="590" cy="310" rx="130" ry="240" />
+              <ellipse cx="590" cy="310" rx="225" ry="90" />
+              <path d="M350 310H830M590 70V550" />
+              <path class="export-route" pathLength="1" d="M680 270 Q540 45 410 235" />
+              <path class="export-route" pathLength="1" d="M680 270 Q815 90 850 325" />
+              <path class="export-route" pathLength="1" d="M680 270 Q550 170 515 455" />
+              <path class="export-route" pathLength="1" d="M680 270 Q410 280 350 375" />
+              <circle cx="680" cy="270" r="8" fill="white" />
+              <circle cx="680" cy="270" r="22" stroke="white" />
+              <text x="700" y="265">KOREA</text>
+              <text x="430" y="590">GLOBAL PARTNERSHIP</text>
+            </svg>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <footer class="site-footer">
+      <div class="wrap">
+        <div class="foot-top">
+          <div class="foot-brand">
+            <img src="./assets/boomyung_ci_logo.png" alt="BOOMYUNG" />
+            <div class="name" id="foot-company"></div>
+            <div id="foot-address"></div>
+            <div id="foot-email"></div>
+          </div>
+          <div class="foot-cols">
+            <div class="foot-col">
+              <h4>기업 안내</h4>
+              <a href="about.html">회사소개</a>
+              <a href="manufacturing.html">제조·역량</a>
+              <a href="brands.html">브랜드</a>
+              <a href="network.html">파트너·네트워크</a>
+            </div>
+            <div class="foot-col">
+              <h4>비즈니스</h4>
+              <a href="catalog.html">제품 카탈로그</a>
+              <a href="contact.html">B2B 입점 문의</a>
+            </div>
+          </div>
+        </div>
+        <div class="foot-bottom">
+          <span id="foot-copy"></span>
+          <div class="foot-legal">
+            <span>개인정보처리방침</span>
+            <span>이용약관</span>
+          </div>
+        </div>
+      </div>
+    </footer>
+
+    <script src="./js/common.js"></script>
+    <script src="./js/vendor/gsap.min.js"></script>
+    <script src="./js/vendor/ScrollTrigger.min.js"></script>
+    <script src="./js/vendor/lenis.min.js"></script>
+    <script src="./js/motion.js"></script>
+    <script src="./js/network.js"></script>
+  </body>
+</html>

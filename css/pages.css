@@ -1,0 +1,922 @@
+/* Shared styles for brands / imported-brands / catalog / trust / contact / admin.
+   Loaded alongside main.css — reuses its tokens (--bg, --navy, --gold, etc). */
+
+/* ---------- Brand page (brands.html): 자사 + 수입 브랜드 한 페이지 ---------- */
+/* 히어로 아래 여백을 없애고 탭 바가 히어로에 걸쳐 떠 있게 한다 */
+.brands-section { padding-top: 0; }
+.brand-filter-wrap {
+  display: flex;
+  justify-content: center;
+  margin-top: -34px;
+  margin-bottom: 56px;
+  position: relative;
+  z-index: 5;
+}
+.brand-filter-bar {
+  display: inline-flex;
+  gap: 6px;
+  padding: 6px;
+  border-radius: 999px;
+  background: #fff;
+  border: 1px solid var(--line);
+  box-shadow: 0 12px 32px rgba(15, 23, 42, .12);
+  flex-wrap: wrap;
+}
+.brand-filter-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 0;
+  background: transparent;
+  border-radius: 999px;
+  padding: 11px 24px;
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--ink-soft);
+  cursor: pointer;
+  transition: background .2s ease, color .2s ease;
+}
+.brand-filter-btn:hover { color: var(--ink); background: var(--bg-alt); }
+.brand-filter-btn.active { background: var(--signature); color: #fff; }
+.brand-filter-btn .count {
+  font-size: 11.5px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(26, 26, 26, .08);
+}
+.brand-filter-btn.active .count { background: rgba(255, 255, 255, .22); color: #fff; }
+.brand-filter-btn .label-short { display: none; }
+
+.brand-group[hidden] { display: none; }
+.brand-group + .brand-group { margin-top: 76px; }
+.brand-group-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 40px;
+  padding-bottom: 18px;
+  border-bottom: 2px solid var(--line);
+  margin-bottom: 34px;
+  position: relative;
+}
+/* 제목 아래 포인트 밑줄 */
+.brand-group-head::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -2px;
+  width: 78px;
+  height: 2px;
+  background: var(--signature);
+}
+.brand-group-tag {
+  display: block;
+  font-size: 11px;
+  letter-spacing: .14em;
+  font-weight: 600;
+  color: var(--signature);
+  margin-bottom: 10px;
+}
+.brand-group-tag.imported { color: var(--gold-ink); }
+.brand-group-title { font-family: var(--serif); font-size: 26px; font-weight: 500; margin: 0; }
+.brand-group-desc {
+  color: var(--ink-soft);
+  font-size: 13.5px;
+  line-height: 1.65;
+  max-width: 460px;
+  margin: 0;
+  text-align: right;
+}
+
+/* 공통 카드 뼈대 */
+.brand-own-card,
+.brand-imported-card {
+  scroll-margin-top: 110px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  background: #fff;
+  border: 1px solid var(--line);
+  position: relative;
+  overflow: hidden;
+  transition: box-shadow .3s ease, transform .3s ease, border-color .3s ease;
+}
+.brand-card-foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-top: 22px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+.brand-count { font-size: 12px; color: var(--ink-soft); }
+.brand-arrow { font-size: 12.5px; font-weight: 500; color: var(--navy); transition: transform .25s ease; }
+.brand-own-card:hover .brand-arrow,
+.brand-imported-card:hover .brand-arrow { transform: translateX(4px); }
+
+/* 자사 브랜드: 2열 쇼케이스 */
+.brand-own-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 26px;
+}
+.brand-own-card {
+  border-radius: 18px;
+  padding: 32px 30px 24px;
+}
+/* 호버하면 브랜드 컬러 띠가 위에서 펼쳐진다 */
+.brand-own-card::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 0;
+  width: 100%;
+  height: 4px;
+  background: var(--accent, var(--navy));
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform .4s ease;
+}
+.brand-own-card:hover { transform: translateY(-6px); box-shadow: 0 22px 46px rgba(15, 23, 42, .13); }
+.brand-own-card:hover::before { transform: scaleX(1); }
+.brand-own-logo {
+  height: 60px;
+  display: flex;
+  align-items: center;
+  margin-bottom: 22px;
+}
+.brand-own-logo img { max-height: 100%; max-width: 170px; object-fit: contain; }
+.brand-own-logo .logo-text { font-family: var(--serif); font-size: 22px; color: var(--navy); }
+.brand-own-name {
+  font-family: var(--serif);
+  font-size: 21px;
+  font-weight: 500;
+  margin: 0 0 8px;
+  display: flex;
+  align-items: baseline;
+  gap: 9px;
+}
+.brand-own-name small { font-family: var(--sans); font-size: 12.5px; font-weight: 400; color: var(--ink-soft); }
+.brand-own-tagline {
+  display: block;
+  font-size: 10.5px;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--accent, var(--gold-ink));
+  margin-bottom: 12px;
+}
+.brand-own-desc { color: var(--ink-soft); font-size: 13.5px; line-height: 1.75; margin: 0; }
+
+/* 수입 브랜드: 3열 + 원산지 칩 */
+.brand-imported-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 22px;
+}
+.brand-imported-card {
+  border-radius: 16px;
+  padding: 26px 24px 20px;
+}
+.brand-imported-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 18px 38px rgba(15, 23, 42, .1);
+  border-color: var(--signature);
+}
+.brand-imported-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.brand-imported-logo { height: 46px; display: flex; align-items: center; }
+.brand-imported-logo img { max-height: 100%; max-width: 128px; object-fit: contain; }
+.brand-imported-logo .logo-text { font-family: var(--serif); font-size: 18px; color: var(--navy); }
+.brand-origin {
+  flex: none;
+  font-size: 11.5px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--bg-alt);
+  border: 1px solid var(--line);
+  color: var(--ink);
+}
+.brand-imported-name { font-family: var(--serif); font-size: 18px; font-weight: 500; margin: 0 0 6px; }
+.brand-imported-tagline {
+  display: block;
+  font-size: 10.5px;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--gold-ink);
+  margin-bottom: 10px;
+}
+.brand-imported-desc { color: var(--ink-soft); font-size: 13px; line-height: 1.7; margin: 0; }
+
+/* ---------- Catalog ---------- */
+.catalog-toolbar {
+  position: sticky;
+  top: 61px;
+  z-index: 20;
+  background: var(--bg);
+  border-bottom: 1px solid var(--line);
+  padding: 20px 0;
+}
+.filter-group { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 12px; }
+.filter-group:last-of-type { margin-bottom: 0; }
+.filter-label { font-size: 11px; letter-spacing: .08em; color: var(--ink-soft); font-weight: 600; flex-shrink: 0; }
+.filter-row { display: flex; gap: 10px; flex-wrap: wrap; }
+.filter-chip {
+  font-size: 12.5px;
+  padding: 8px 18px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: #fff;
+  color: var(--ink-soft);
+  cursor: pointer;
+  transition: all .2s ease;
+}
+.filter-chip:hover { border-color: var(--navy); color: var(--navy); }
+.filter-chip.active { background: var(--navy); border-color: var(--navy); color: #fff; }
+.catalog-count { font-size: 12.5px; color: var(--ink-soft); margin-top: 12px; }
+
+.catalog-grid {
+  margin-top: 40px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+}
+.product-card {
+  background: #fff;
+  border: 1px solid var(--line);
+  cursor: pointer;
+  transition: box-shadow .3s ease, transform .3s ease;
+  display: flex;
+  flex-direction: column;
+  /* 그리드 아이템의 기본 min-width는 auto라서, 내용물(이미지/긴 텍스트)의 고유 크기보다
+     좁게는 절대 줄어들지 않아 모바일 2열에서 카드가 트랙 밖으로 밀려나갔음(그리드 블로우아웃) */
+  min-width: 0;
+}
+.product-card:hover { box-shadow: 0 18px 40px rgba(15,23,42,.12); transform: translateY(-3px); }
+.product-card .thumb { aspect-ratio: 1/1; background: var(--bg-alt); overflow: hidden; display: flex; align-items: center; justify-content: center; }
+.product-card .thumb img { width: 100%; height: 100%; object-fit: contain; padding: 14px; transition: transform .4s ease; }
+.product-card:hover .thumb img { transform: scale(1.06); }
+.product-card .info { padding: 16px 18px 20px; }
+.product-card .brand-tag { font-size: 10.5px; letter-spacing: .06em; color: var(--gold-ink); margin-bottom: 6px; text-transform: uppercase; }
+.product-card h4 { font-family: var(--serif); font-size: 14.5px; font-weight: 500; margin: 0 0 6px; line-height: 1.4; }
+.product-card .spec { font-size: 11.5px; color: var(--ink-soft); }
+.product-card .item-no {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+  font-size: 11px;
+  letter-spacing: .04em;
+  color: var(--ink-soft);
+}
+.catalog-empty { text-align: center; padding: 80px 0; color: var(--ink-soft); font-size: 14px; }
+
+/* Product detail overlay */
+.product-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(14,23,48,.55);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .25s ease;
+}
+.product-modal.open { opacity: 1; pointer-events: auto; }
+.product-modal .sheet {
+  background: var(--bg);
+  max-width: 880px;
+  width: 100%;
+  max-height: 86vh;
+  overflow: hidden;
+  position: relative;
+  transform: translateY(12px);
+  transition: transform .25s ease;
+}
+.product-modal.open .sheet { transform: translateY(0); }
+.product-modal .close-btn {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  background: #fff;
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+  color: var(--ink-soft);
+  z-index: 1;
+}
+.product-modal .close-btn:hover { color: var(--ink); border-color: var(--ink); }
+
+/* Simple full-image lightbox (certifications, patents) */
+/* 원본 홈페이지와 동일한 인증서/특허 팝업 스타일 */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 220;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(10, 37, 64, 0.85);
+  backdrop-filter: blur(4px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .25s ease;
+}
+.modal-backdrop.open { opacity: 1; pointer-events: auto; }
+.modal-content {
+  position: relative;
+  max-width: 860px;
+  max-height: 90vh;
+  background: #FFFFFF;
+  border-radius: 12px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 25px 60px rgba(0,0,0,.3);
+  transform: scale(.97);
+  transition: transform .25s ease;
+}
+.modal-backdrop.open .modal-content { transform: scale(1); }
+.modal-content img {
+  max-width: 100%;
+  max-height: 75vh;
+  object-fit: contain;
+  background: #F8FAFC;
+}
+.modal-close-btn {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: rgba(10, 37, 64, .6);
+  border: none;
+  color: #FFF;
+  font-size: 1.5rem;
+  cursor: pointer;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
+.modal-close-btn:hover { background: var(--navy); }
+.modal-caption {
+  padding: 14px 18px;
+  background: var(--navy);
+  color: #FFF;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* 좌측 대표 이미지는 고정, 우측 상세 정보만 스크롤되도록 분리 */
+.product-detail { display: grid; grid-template-columns: 1fr 1fr; max-height: 86vh; }
+.product-detail .pd-media { background: var(--bg-alt); display: flex; align-items: center; justify-content: center; padding: 40px; min-width: 0; }
+.product-detail .pd-media img { max-width: 100%; max-height: 360px; object-fit: contain; }
+.product-detail .pd-body { padding: 44px 40px; min-width: 0; max-height: 86vh; overflow-y: auto; }
+.product-detail h2 { min-width: 0; max-width: 100%; }
+.product-detail .brand-tag { font-size: 11px; letter-spacing: .08em; color: var(--gold-ink); margin-bottom: 12px; text-transform: uppercase; }
+.product-detail h2 { font-family: var(--serif); font-size: 22px; font-weight: 500; margin: 0 0 6px; }
+.product-detail .meta-row { display: flex; gap: 24px; font-size: 12.5px; color: var(--ink-soft); margin-bottom: 20px; flex-wrap: wrap; }
+.product-detail .meta-row strong { color: var(--ink); font-weight: 600; }
+.product-detail ul.pd-features { margin: 0 0 22px; padding-left: 18px; font-size: 13px; color: var(--ink-soft); }
+.product-detail ul.pd-features li { margin-bottom: 6px; }
+.pd-nutrition { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--line); border: 1px solid var(--line); margin-bottom: 18px; }
+.pd-nutrition > div { background: #fff; padding: 10px 4px; text-align: center; display: flex; flex-direction: column; }
+.pd-nutrition .label {
+  font-size: 10px;
+  color: var(--ink-soft);
+  margin-bottom: 4px;
+  min-height: 2.4em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1.2;
+}
+.pd-nutrition .value { font-size: 12px; color: var(--ink); font-weight: 600; white-space: nowrap; }
+.pd-ingredients { font-size: 12px; color: var(--ink-soft); line-height: 1.7; padding-top: 14px; border-top: 1px solid var(--line); }
+.pd-ingredients strong { display: block; color: var(--ink); font-size: 12.5px; margin-bottom: 6px; }
+.pd-detail-images { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; }
+.pd-detail-images img { display: block; max-width: 100%; width: auto; height: auto; margin: 0 auto; object-fit: contain; border: 1px solid var(--line); border-radius: 4px; cursor: zoom-in; }
+.pd-actions { margin-top: 22px; display: flex; flex-wrap: wrap; gap: 10px; }
+/* 버튼이 두 개 나란히 서는 자리라, 예전의 큼직한 단일 버튼보다 작게 잡는다 */
+.pd-buy-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border-radius: 999px;
+  background: var(--navy);
+  color: #fff;
+  font-size: 12.5px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: opacity .2s;
+}
+.pd-buy-btn:hover { opacity: .88; color: #fff; }
+/* B2B 쪽은 보조 동작이라 아웃라인으로 구분 */
+.pd-buy-btn.b2b { background: transparent; color: var(--navy); border: 1px solid var(--navy); }
+.pd-buy-btn.b2b:hover { background: var(--navy); color: #fff; opacity: 1; }
+
+/* ---------- Trust page ---------- */
+/* siteC 트러스트 페이지의 "품질 및 안전 인증 시스템" 섹션과 동일한 디자인 */
+.bm-trust-section-head {
+  margin-bottom: 32px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  border-bottom: 2px solid var(--line);
+  padding-bottom: 16px;
+  position: relative;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.bm-trust-section-head::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 70px;
+  height: 2px;
+  background: var(--signature);
+}
+.bm-trust-tag {
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--signature);
+  margin-bottom: 4px;
+  display: block;
+}
+.bm-trust-title {
+  font-family: var(--serif);
+  font-size: 1.65rem;
+  font-weight: 800;
+  color: var(--navy);
+  line-height: 1.25;
+  margin: 0;
+}
+.bm-trust-desc {
+  font-size: 0.9rem;
+  color: var(--ink-soft);
+  max-width: 520px;
+  text-align: right;
+  line-height: 1.5;
+  margin: 0;
+}
+.bm-cert-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; }
+.bm-cert-card {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: 22px 20px 26px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  box-shadow: 0 4px 16px rgba(0,0,0,.02);
+  transition: all .3s cubic-bezier(.16,1,.3,1);
+  position: relative;
+  overflow: hidden;
+}
+.bm-cert-card.clickable { cursor: pointer; }
+.bm-cert-card:hover { transform: translateY(-8px); box-shadow: 0 16px 36px rgba(0,102,179,.12); border-color: var(--signature); }
+.bm-cert-badge-wrap { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 14px; }
+.bm-cert-code {
+  font-size: 1.05rem;
+  font-weight: 900;
+  color: var(--signature);
+  letter-spacing: .04em;
+  background: #EBF5FF;
+  padding: 4px 12px;
+  border-radius: 20px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.bm-cert-logo-badge {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: #fff;
+  border: 1px solid var(--line);
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,.04);
+  flex-shrink: 0;
+}
+.bm-cert-logo-badge.aafco { width: 58px; height: 40px; padding: 4px 6px; border-radius: 10px; }
+.bm-cert-logo-badge img { max-width: 100%; max-height: 100%; object-fit: contain; display: block; }
+.bm-cert-logo-badge.aafco img { max-height: 20px; }
+.bm-cert-card-title { font-family: var(--serif); font-size: 1.05rem; font-weight: 800; color: var(--navy); line-height: 1.4; margin: 0 0 8px; }
+.bm-cert-card-desc { font-size: .86rem; color: var(--ink-soft); line-height: 1.55; margin: 0; }
+
+.patent-grid { margin-top: 40px; display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; }
+.patent-card { background: #fff; border: 1px solid var(--line); overflow: hidden; transition: box-shadow .3s ease; }
+.patent-card.clickable { cursor: pointer; }
+.patent-card:hover { box-shadow: 0 14px 30px rgba(15,23,42,.1); }
+.patent-card .thumb { aspect-ratio: 3/4; overflow: hidden; background: var(--bg-alt); }
+.patent-card img { width: 100%; height: 100%; object-fit: cover; }
+.patent-card .cap { padding: 12px 14px; }
+.patent-card .type { font-size: 10.5px; color: var(--gold-ink); letter-spacing: .04em; }
+.patent-card .num { font-size: 12px; color: var(--ink); font-family: var(--serif); margin-top: 2px; line-height: 1.4; }
+.cert-card.no-thumb { display: flex; flex-direction: column; justify-content: center; }
+
+/* ---------- Global exhibition galleries ---------- */
+.expo-block { padding: 32px 0; border-top: 1px solid var(--line); }
+.expo-block:last-child { border-bottom: 1px solid var(--line); }
+.expo-head { display: flex; align-items: baseline; gap: 16px; margin-bottom: 20px; flex-wrap: wrap; }
+.expo-head h3 { font-family: var(--serif); font-size: 17px; font-weight: 500; margin: 0; }
+.expo-location { font-size: 12px; color: var(--ink-soft); }
+.expo-gallery { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; }
+.expo-photo { aspect-ratio: 1/1; overflow: hidden; border-radius: 3px; }
+.expo-photo img { width: 100%; height: 100%; object-fit: cover; transition: transform .4s ease; }
+.expo-photo:hover img { transform: scale(1.08); }
+
+/* ---------- Logo flow grid (retail / distributor partnership) ---------- */
+.logo-flow-grid { margin-top: 40px; display: grid; grid-template-columns: repeat(7, 1fr); gap: 12px; }
+
+/* ---------- Contact ---------- */
+.contact-layout { display: grid; grid-template-columns: 0.9fr 1.1fr; gap: 64px; }
+.contact-info h2 { font-family: var(--serif); font-size: 22px; font-weight: 500; margin: 0 0 16px; }
+.contact-info p { color: var(--ink-soft); font-size: 14px; line-height: 1.8; margin: 0 0 28px; }
+.contact-detail-list { display: flex; flex-direction: column; gap: 14px; }
+.contact-detail-list .row { display: flex; gap: 14px; font-size: 13.5px; }
+.contact-detail-list .label { width: 70px; color: var(--ink-soft); flex-shrink: 0; }
+.contact-detail-list .value { color: var(--ink); }
+
+.contact-form { display: flex; flex-direction: column; gap: 18px; }
+.privacy-check { display: flex; align-items: flex-start; gap: 8px; cursor: pointer; user-select: none; }
+.privacy-check input[type="checkbox"] { margin-top: 2px; width: 15px; height: 15px; accent-color: var(--navy); cursor: pointer; flex-shrink: 0; }
+.privacy-check span { font-size: 12.5px; color: var(--muted, #666); line-height: 1.45; }
+.form-row { display: flex; flex-direction: column; gap: 8px; }
+.form-row label { font-size: 12.5px; color: var(--ink); font-weight: 600; }
+.form-row label .req { color: #b91c1c; margin-left: 2px; }
+.form-row input, .form-row textarea {
+  font-family: var(--sans);
+  font-size: 14px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: #fff;
+  color: var(--ink);
+  transition: border-color .2s ease;
+}
+.form-row input:focus, .form-row textarea:focus { outline: none; border-color: var(--navy); }
+.form-row textarea { resize: vertical; min-height: 120px; font-family: var(--sans); }
+.form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+.hp-field { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+.submit-btn {
+  align-self: flex-start;
+  background: var(--navy);
+  color: #fff;
+  border: none;
+  padding: 14px 36px;
+  border-radius: 999px;
+  font-size: 13.5px;
+  letter-spacing: .04em;
+  cursor: pointer;
+  transition: background .25s ease;
+}
+.submit-btn:hover { background: var(--navy-deep); }
+.submit-btn:disabled { opacity: .5; cursor: not-allowed; }
+.form-msg { font-size: 13px; padding: 12px 16px; border-radius: 4px; display: none; }
+.form-msg.show { display: block; }
+.form-msg.success { background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; }
+.form-msg.error { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
+
+@media (max-width: 900px) {
+  .catalog-grid { grid-template-columns: repeat(2, 1fr); gap: 16px; }
+  /* 좁은 화면에서는 이미지+정보가 세로로 쌓이므로, 우측만 스크롤하는 데스크톱
+     레이아웃을 풀고 시트 전체가 하나로 스크롤되게 되돌림 */
+  .product-detail { grid-template-columns: 1fr; max-height: none; }
+  .product-detail .pd-body { max-height: none; overflow-y: visible; }
+  .product-modal .sheet { overflow-y: auto; }
+  .bm-cert-grid { grid-template-columns: repeat(2, 1fr); }
+  .bm-trust-section-head { flex-direction: column; align-items: flex-start; gap: 8px; }
+  .bm-trust-title { font-size: 1.35rem; }
+  .bm-trust-desc { text-align: left; }
+  .patent-grid { grid-template-columns: repeat(2, 1fr); }
+  .contact-layout { grid-template-columns: 1fr; gap: 40px; }
+  .form-grid-2 { grid-template-columns: 1fr; }
+  .pd-nutrition { grid-template-columns: repeat(2, 1fr); }
+  .expo-gallery { grid-template-columns: repeat(3, 1fr); }
+  .logo-flow-grid { grid-template-columns: repeat(3, 1fr); }
+}
+
+/* ---------- Corporate weight tuning (see main.css for rationale) ---------- */
+.brand-card-name,
+.product-detail h2,
+.cert-card h3,
+.expo-head h3,
+.contact-info h2 {
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+.product-card h4,
+.patent-card .num {
+  font-weight: 600;
+}
+
+
+/* ---------- 제조·역량 (manufacturing.html) ---------- */
+.mfg-hero .hero-video[hidden] { display: none; }
+.mfg-media { margin-bottom: 44px; }
+.mfg-media:empty { display: none; }
+.mfg-video,
+.mfg-photo {
+  width: 100%;
+  max-height: 520px;
+  object-fit: cover;
+  border-radius: 14px;
+  display: block;
+  background: var(--bg-alt);
+}
+
+.mfg-capability-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 20px;
+}
+.mfg-capability {
+  position: relative;
+  overflow: hidden;
+  background: #fff;
+  border: 1px solid #dcd6ca;
+  border-radius: 14px;
+  padding: 28px 24px 26px;
+  box-shadow: 0 4px 16px rgba(15, 23, 42, .05);
+  transition: transform .3s ease, box-shadow .3s ease, border-color .3s ease;
+}
+/* 상단 포인트 띠: 평소엔 짧게, 호버하면 카드 폭 전체로 */
+.mfg-capability::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 0;
+  width: 44px;
+  height: 3px;
+  background: var(--signature);
+  transition: width .4s ease;
+}
+.mfg-capability:hover {
+  transform: translateY(-6px);
+  border-color: var(--signature);
+  box-shadow: 0 18px 38px rgba(15, 23, 42, .12);
+}
+.mfg-capability:hover::before { width: 100%; }
+/* 모래 공장 제조 단계: 카드가 화살표로 이어지고 호버하면 다음 단계로 넘어가는 느낌 */
+.mfg-step-flow {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 18px;
+  counter-reset: mfg-step;
+}
+.mfg-step {
+  position: relative;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 24px 22px;
+  transition: transform .3s ease, box-shadow .3s ease, border-color .3s ease;
+}
+/* 카드 사이를 잇는 화살표 */
+.mfg-step + .mfg-step::before {
+  content: "";
+  position: absolute;
+  left: -18px;
+  top: 50%;
+  width: 18px;
+  height: 1px;
+  background: var(--line);
+}
+.mfg-step + .mfg-step::after {
+  content: "";
+  position: absolute;
+  left: -7px;
+  top: 50%;
+  width: 5px;
+  height: 5px;
+  border-top: 1px solid var(--line);
+  border-right: 1px solid var(--line);
+  transform: translateY(-50%) rotate(45deg);
+  transition: border-color .3s ease, transform .3s ease;
+}
+.mfg-step:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 18px 38px rgba(15, 23, 42, .12);
+  border-color: var(--signature);
+}
+.mfg-step:hover + .mfg-step::before { background: var(--signature); }
+.mfg-step:hover + .mfg-step::after {
+  border-color: var(--signature);
+  transform: translateY(-50%) rotate(45deg) translate(2px, -2px);
+}
+.mfg-step-num {
+  display: block;
+  font-size: 10.5px;
+  letter-spacing: .16em;
+  font-weight: 600;
+  color: var(--gold-ink);
+  margin-bottom: 10px;
+  transition: color .3s ease;
+}
+.mfg-step:hover .mfg-step-num { color: var(--signature); }
+.mfg-step h3 { font-family: var(--serif); font-size: 16.5px; font-weight: 600; margin: 0 0 10px; color: var(--navy); }
+.mfg-step p { font-size: 13.5px; line-height: 1.75; color: var(--ink-soft); margin: 0; }
+
+.mfg-capability h3 { font-family: var(--serif); font-size: 16.5px; font-weight: 600; margin: 0 0 10px; color: var(--navy); }
+.mfg-capability p { font-size: 13.5px; line-height: 1.75; color: var(--ink-soft); margin: 0; }
+
+.mfg-gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 16px;
+  margin-top: 32px;
+}
+.mfg-gallery:empty { display: none; }
+/* 공정 단계 갤러리: 4 x 2 고정 배열 */
+.mfg-gallery.process { grid-template-columns: repeat(4, 1fr); }
+/* 사진 + 설명을 한 장의 카드로 묶고, 호버하면 카드가 떠오르며 사진이 확대된다 */
+.mfg-gallery-item {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border: 1px solid #dcd6ca;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(15, 23, 42, .05);
+  transition: transform .3s ease, box-shadow .3s ease, border-color .3s ease;
+}
+.mfg-gallery-item.clickable { cursor: zoom-in; }
+.mfg-gallery-item:hover {
+  transform: translateY(-6px);
+  border-color: var(--signature);
+  box-shadow: 0 18px 38px rgba(15, 23, 42, .13);
+}
+.mfg-gallery-thumb { overflow: hidden; background: var(--bg-alt); }
+.mfg-gallery-thumb img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; display: block; transition: transform .5s ease; }
+.mfg-gallery-item:hover .mfg-gallery-thumb img { transform: scale(1.06); }
+.mfg-gallery-item figcaption {
+  position: relative;
+  flex: 1;
+  font-size: 13.5px;
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--navy);
+  padding: 14px 16px 16px;
+  border-top: 1px solid var(--line);
+  transition: color .3s ease;
+}
+/* 캡션 위 포인트 선이 호버하면 카드 폭으로 늘어난다 */
+.mfg-gallery-item figcaption::before {
+  content: "";
+  position: absolute;
+  left: 0; top: -1px;
+  width: 0;
+  height: 2px;
+  background: var(--signature);
+  transition: width .4s ease;
+}
+.mfg-gallery-item:hover figcaption { color: var(--signature); }
+.mfg-gallery-item:hover figcaption::before { width: 100%; }
+
+@media (max-width: 1080px) {
+  .mfg-step-flow { grid-template-columns: repeat(2, 1fr); }
+  .mfg-step:nth-child(3)::before, .mfg-step:nth-child(3)::after { display: none; }
+  .mfg-gallery.process { grid-template-columns: repeat(2, 1fr); }
+  .brand-imported-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 760px) {
+  .brand-group-head { flex-direction: column; align-items: flex-start; gap: 14px; }
+  .brand-group-desc { text-align: left; }
+  .brand-filter-wrap { margin-top: -28px; margin-bottom: 40px; }
+  /* 모바일: 짧은 라벨로 3칸을 한 줄에 균등 배치 */
+  .brand-filter-bar { display: grid; grid-template-columns: repeat(3, 1fr); width: 100%; flex-wrap: nowrap; }
+  .brand-filter-btn { justify-content: center; padding: 10px 6px; font-size: 13px; gap: 6px; white-space: nowrap; }
+  .brand-filter-btn .label { display: none; }
+  .brand-filter-btn .label-short { display: inline; }
+  .brand-own-grid, .brand-imported-grid { grid-template-columns: 1fr; }
+  .mfg-video, .mfg-photo { max-height: 260px; }
+  .mfg-step-flow { grid-template-columns: 1fr; }
+  .mfg-step + .mfg-step::before { left: 50%; top: -18px; width: 1px; height: 18px; }
+  .mfg-step + .mfg-step::after { left: 50%; top: -8px; transform: translateX(-50%) rotate(135deg); }
+  .mfg-step:hover + .mfg-step::after { transform: translateX(-50%) rotate(135deg) translate(2px, -2px); }
+  .mfg-gallery.process { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* ---------- 수출 파트너십 섹션 (network.html 마지막) ----------
+   siteD 메인의 수출 스토리 섹션을 옮겨 왔다. 스크롤 진행도를 --export-p
+   (0~1) 로 넣어 배경 줌, 카피 이동, 항로 그리기를 한 번에 묶는다. */
+.export-story { height: 290svh; position: relative; background: #061d33; --export-p: 0; }
+.export-stage {
+  position: sticky;
+  top: 88px;
+  height: calc(100svh - 88px);
+  overflow: hidden;
+  isolation: isolate;
+  color: #fff;
+}
+.export-background {
+  position: absolute;
+  inset: -5%;
+  width: 110%;
+  height: 110%;
+  object-fit: cover;
+  transform: scale(calc(1.13 - var(--export-p) * .13)) translateX(calc(var(--export-p) * -3%));
+  /* 전역 img { max-width: 100% } 가 110% 폭을 눌러 오른쪽이 비지 않게 한다 */
+  max-width: none;
+  will-change: transform;
+}
+.export-shade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, #031c35c9, #031c3530 80%), linear-gradient(0deg, #03162677, transparent);
+}
+.export-copy {
+  position: absolute;
+  z-index: 3;
+  left: 9%;
+  top: 27%;
+  transform: translateY(calc(var(--export-p) * -35px));
+  max-width: 620px;
+}
+.export-copy .story-eyebrow {
+  display: block;
+  font-size: 10px;
+  letter-spacing: .28em;
+  color: var(--gold);
+  margin-bottom: 4px;
+}
+.export-copy h2 {
+  font-family: var(--serif);
+  font-size: clamp(34px, 4.1vw, 64px);
+  font-weight: 500;
+  line-height: 1.36;
+  letter-spacing: -.04em;
+  color: #fff;
+  margin: 22px 0;
+}
+.export-copy p { font-size: 15px; line-height: 1.9; white-space: pre-line; color: #d2e4ed; margin: 0 0 30px; }
+.export-btn {
+  display: inline-block;
+  padding: 14px 30px;
+  border: 1px solid rgba(255, 255, 255, .55);
+  border-radius: 999px;
+  color: #fff;
+  font-size: 13.5px;
+  transition: background .25s ease, border-color .25s ease;
+}
+.export-btn:hover { background: rgba(255, 255, 255, .14); border-color: #fff; }
+.export-network {
+  position: absolute;
+  right: -12%;
+  top: -5%;
+  width: 85%;
+  height: 110%;
+  opacity: calc(.2 + var(--export-p) * .8);
+  transform: translateX(calc((1 - var(--export-p)) * 160px)) rotate(calc((1 - var(--export-p)) * 12deg));
+  pointer-events: none;
+}
+.export-network svg { width: 100%; height: 100%; fill: none; stroke: #9de5ff40; stroke-width: 1; }
+.export-network text { fill: #d4f3ff; stroke: none; font-size: 15px; letter-spacing: 4px; }
+.export-route {
+  stroke: #b3f2ff;
+  stroke-width: 2;
+  stroke-dasharray: 1;
+  stroke-dashoffset: calc(1 - var(--export-p));
+  filter: drop-shadow(0 0 8px #79ddff);
+}
+
+@media (max-width: 760px) {
+  .export-story { height: 250svh; }
+  .export-stage { top: 72px; height: calc(100svh - 72px); }
+  .export-copy { top: 15%; left: 9%; right: 9%; }
+  .export-copy h2 { font-size: 34px; }
+  .export-copy p { font-size: 13px; }
+  .export-network { top: 32%; right: 0; height: 75%; width: 140%; }
+  .export-background { object-position: 65% center; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .export-story { height: 100svh; }
+  .export-background, .export-network, .export-copy { transform: none; }
+  .export-network { opacity: .6; }
+  .export-route { stroke-dashoffset: 0; }
+}
